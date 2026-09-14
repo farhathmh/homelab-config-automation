@@ -6,12 +6,18 @@ Production-grade, automated virtual machine template generation and instance pro
 
 ## 1. Supported Golden Templates
 
-| Distribution | Source Image Format | Default VM ID | Initialization Engine | Firmware |
-| :--- | :--- | :--- | :--- | :--- |
-| **Ubuntu 24.04 LTS (Noble)** | Official Canonical `.img` | `9000` | Cloud-Init (NoCloud) | OVMF (UEFI 4M) |
-| **Ubuntu 26.04 LTS (Resolute)** | Official Canonical `.img` | `9002` | Cloud-Init (NoCloud) | OVMF (UEFI 4M) |
-| **Debian 12 (Bookworm)** | Official Debian `.qcow2` | `9010` | Cloud-Init (NoCloud) | OVMF (UEFI 4M) |
-| **Debian 13 (Trixie)** | Official Debian `.qcow2` | `9012` | Cloud-Init (NoCloud) | OVMF (UEFI 4M) |
+All four distributions are defined in `var.templates`
+(`terraform/templates/variables.tf`), but only one is built by default —
+`var.active_templates` gates which map entries actually get created. See
+[`docs/adding-a-new-template.md`](file:///home/erenyx/homelab-config-automation/docs/adding-a-new-template.md)
+for how to opt others in.
+
+| Distribution | Source Image Format | Default VM ID | Built by default? | Initialization Engine | Firmware |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Ubuntu 24.04 LTS (Noble)** | Official Canonical `.img` | `9000` | No (opt-in) | Cloud-Init (NoCloud) | OVMF (UEFI 4M) |
+| **Ubuntu 26.04 LTS (Resolute)** | Official Canonical `.img` | `9002` | **Yes** | Cloud-Init (NoCloud) | OVMF (UEFI 4M) |
+| **Debian 12 (Bookworm)** | Official Debian `.qcow2` | `9010` | No (opt-in) | Cloud-Init (NoCloud) | OVMF (UEFI 4M) |
+| **Debian 13 (Trixie)** | Official Debian `.qcow2` | `9012` | No (opt-in) | Cloud-Init (NoCloud) | OVMF (UEFI 4M) |
 
 
 ---
@@ -74,14 +80,15 @@ ssh_public_key    = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5... user@host"
 **Using Makefile shortcuts:**
 ```bash
 make init             # Initialize Terraform provider
-make plan             # Review execution plan
-make apply            # Build all 4 templates (~20 seconds)
+make plan             # Review execution plan (default: Resolute only, ~20 seconds)
+make apply            # Build the active template set (default: Resolute only)
 
-# Target specific templates:
-make apply-ubuntu-24  # Build only Ubuntu 24.04 LTS (Noble)
-make apply-ubuntu-26  # Build only Ubuntu 26.04 LTS (Resolute)
-make apply-debian-12  # Build only Debian 12 (Bookworm)
-make apply-debian-13  # Build only Debian 13 (Trixie)
+# Build a specific distro instead (replaces the active set — see Makefile
+# comments; review the plan before confirming):
+make apply-noble      # Build only Ubuntu 24.04 LTS (Noble)
+make apply-resolute   # Build only Ubuntu 26.04 LTS (Resolute) — the default
+make apply-bookworm   # Build only Debian 12 (Bookworm)
+make apply-trixie     # Build only Debian 13 (Trixie)
 ```
 
 **Or using direct Terraform CLI:**
