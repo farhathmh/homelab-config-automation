@@ -9,7 +9,10 @@ Production-grade, automated virtual machine template generation and instance pro
 | Distribution | Source Image Format | Default VM ID | Initialization Engine | Firmware |
 | :--- | :--- | :--- | :--- | :--- |
 | **Ubuntu 24.04 LTS (Noble)** | Official Canonical `.img` | `9000` | Cloud-Init (NoCloud) | OVMF (UEFI 4M) |
+| **Ubuntu 26.04 LTS (Resolute)** | Official Canonical `.img` | `9002` | Cloud-Init (NoCloud) | OVMF (UEFI 4M) |
 | **Debian 12 (Bookworm)** | Official Debian `.qcow2` | `9010` | Cloud-Init (NoCloud) | OVMF (UEFI 4M) |
+| **Debian 13 (Trixie)** | Official Debian `.qcow2` | `9012` | Cloud-Init (NoCloud) | OVMF (UEFI 4M) |
+
 
 ---
 
