@@ -1,0 +1,23 @@
+---
+- name: Apply base configuration to all nodes
+  hosts: all
+  roles:
+    - base
+
+- name: Configure Docker nodes
+  hosts: docker
+  roles:
+    - docker
+
+- name: Configure Kubernetes control-plane nodes
+  hosts: k8s_control
+  roles:
+    - k8s_control
+
+- name: Configure Kubernetes worker nodes
+  hosts: k8s_workers
+  roles:
+    - k8s_worker
+
+- name: Apply security hardening
+  ansible.builtin.import_playbook: security.yml
