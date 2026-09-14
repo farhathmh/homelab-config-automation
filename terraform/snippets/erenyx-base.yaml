@@ -1,0 +1,74 @@
+#cloud-config
+# ==============================================================================
+# Erenyx-Lab Unified Cloud-Init Baseline Configuration
+# ==============================================================================
+# - Automated package installation: qemu-guest-agent, htop, tmux, figlet, curl
+# - Immediate startup of qemu-guest-agent for Proxmox IP discovery
+# - Custom "Erenyx-Lab" figlet ASCII art and system metrics MOTD greeting
+# - Strictly passwordless (key-based SSH authentication only)
+# ==============================================================================
+
+package_update: true
+package_upgrade: false
+
+packages:
+  - qemu-guest-agent
+  - htop
+  - tmux
+  - figlet
+  - curl
+
+runcmd:
+  # Enable and immediately start QEMU Guest Agent
+  - systemctl daemon-reload
+  - systemctl enable --now qemu-guest-agent
+  # Ensure MOTD script is executable
+  - chmod +x /etc/profile.d/99-erenyx-motd.sh
+
+write_files:
+  - path: /etc/profile.d/99-erenyx-motd.sh
+    permissions: '0755'
+    owner: root:root
+    content: |
+      #!/bin/bash
+      # Only run for interactive shell sessions
+      [[ $- != *i* ]] && return
+
+      echo ""
+      # ASCII Banner generated via figlet
+      if command -v figlet >/dev/null 2>&1; then
+          echo -e "\e[1;36m$(figlet -f standard "Erenyx-Lab")\e[0m"
+      else
+          echo -e "\e[1;36m====================================================\e[0m"
+          echo -e "\e[1;36m                    ERENYX-LAB                      \e[0m"
+          echo -e "\e[1;36m====================================================\e[0m"
+      fi
+
+      # Dynamic System Information
+      HOSTNAME=$(hostname -f 2>/dev/null || hostname)
+      OS_NAME=$(grep -oP '(?<=PRETTY_NAME=")[^"]*' /etc/os-release 2>/dev/null || uname -s)
+      KERNEL=$(uname -r)
+      UPTIME=$(uptime -p 2>/dev/null || uptime)
+      LOAD=$(cat /proc/loadavg | awk '{print $1", "$2", "$3}')
+
+      MEM_INFO=($(free -m | awk 'NR==2{printf "%s %s", $3, $2}'))
+      MEM_USED=${MEM_INFO[0]}
+      MEM_TOTAL=${MEM_INFO[1]}
+      MEM_PERCENT=$((MEM_USED * 100 / (MEM_TOTAL ? MEM_TOTAL : 1)))
+
+      DISK_INFO=($(df -h / | awk 'NR==2{printf "%s %s %s", $3, $2, $5}'))
+      DISK_USED=${DISK_INFO[0]}
+      DISK_TOTAL=${DISK_INFO[1]}
+      DISK_PERCENT=${DISK_INFO[2]}
+
+      IP_ADDRS=$(ip -4 -o addr show scope global | awk '{print $4}' | cut -d/ -f1 | paste -sd ", " -)
+
+      echo -e "\e[1;34m─────────────────────────────────────────────────────────────────────────────\e[0m"
+      printf "  \e[1;37m%-16s\e[0m : %s\n" "Host" "$HOSTNAME"
+      printf "  \e[1;37m%-16s\e[0m : %s (%s)\n" "OS / Kernel" "$OS_NAME" "$KERNEL"
+      printf "  \e[1;37m%-16s\e[0m : %s\n" "IP Address(es)" "$IP_ADDRS"
+      printf "  \e[1;37m%-16s\e[0m : %s (Load: %s)\n" "Uptime" "$UPTIME" "$LOAD"
+      printf "  \e[1;37m%-16s\e[0m : %s MB / %s MB (%s%%)\n" "Memory Usage" "$MEM_USED" "$MEM_TOTAL" "$MEM_PERCENT"
+      printf "  \e[1;37m%-16s\e[0m : %s / %s (%s)\n" "Disk (Root /)" "$DISK_USED" "$DISK_TOTAL" "$DISK_PERCENT"
+      echo -e "\e[1;34m─────────────────────────────────────────────────────────────────────────────\e[0m"
+      echo ""
