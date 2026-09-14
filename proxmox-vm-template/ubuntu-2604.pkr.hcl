@@ -45,6 +45,9 @@ source "proxmox-iso" "ubuntu-2604" {
     bridge = var.proxmox_bridge
   }
 
+  # Serial port configuration for terminal monitoring (qm terminal <vmid>)
+  serials = var.enable_serial_console ? ["socket"] : []
+
   # Boot ISO media
   boot_iso {
     type             = "scsi"
@@ -72,7 +75,7 @@ source "proxmox-iso" "ubuntu-2604" {
     "<esc><wait>",
     "<esc><wait>",
     "c<wait>",
-    "linux /casper/vmlinuz quiet autoinstall 'ds=nocloud-net;s=http://{{.HTTPIP}}:{{.HTTPPort}}/' ---<enter><wait>",
+    "linux /casper/vmlinuz quiet autoinstall 'ds=nocloud-net;s=http://{{.HTTPIP}}:{{.HTTPPort}}/' console=tty0 console=ttyS0,115200n8 ---<enter><wait>",
     "initrd /casper/initrd<enter><wait>",
     "boot<enter>"
   ]
