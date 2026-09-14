@@ -58,11 +58,24 @@ initialization {
 ```
 
 ### Method B: Custom Cloud-Init YAML Snippets (`cicustom`)
-Ideal for advanced configuration adhering to the full [cloud-init.io](https://cloud-init.io/) schema (package installation, write_files, custom systemd services):
+This is how `terraform/instances/` bootstraps every cloned node — the
+snippet is uploaded as a real Terraform-managed resource, not pushed
+out-of-band:
 ```hcl
-initialization {
-  datastore_id      = "local-lvm"
-  user_data_file_id = proxmox_virtual_environment_file.user_data_snippet.id
+# terraform/instances/main.tf
+resource "proxmox_virtual_environment_file" "bootstrap_snippet" {
+  content_type = "snippets"
+  datastore_id = var.proxmox_iso_pool
+  node_name    = var.proxmox_node
+
+  source_file {
+    path = "${path.module}/../snippets/bootstrap.yaml"
+  }
+}
+
+module "node" {
+  # ...
+  user_data_file_id = proxmox_virtual_environment_file.bootstrap_snippet.id
 }
 ```
 
@@ -70,36 +83,25 @@ initialization {
 
 ## 3. Standard `cloud-init.io` Schema Structure
 
-Custom snippets in `terraform/snippets/` adhere to the standard schema:
+`terraform/snippets/bootstrap.yaml` is intentionally minimal — its only job
+is to make the node reachable for Ansible. **Nothing role-specific goes
+here**: no `users:` (Terraform's own `user_account` block already handles
+the admin user — defining it twice is a real footgun, not just style), no
+groups, no MOTD/`write_files`, no per-role packages. All of that belongs in
+an Ansible role once the `ansible/` layer exists. An earlier, fuller
+version of this snippet (`erenyx-base.yaml`) mixed those concerns in and
+was reverted for exactly that reason — see `CLAUDE.md`.
 
 ```yaml
 #cloud-config
-# 1. Host identity
-preserve_hostname: false
-fqdn: server.homelab.internal
-
-# 2. User management and SSH key injection
-users:
-  - default
-  - name: erenyx
-    groups: [sudo, docker]
-    shell: /bin/bash
-    sudo: ALL=(ALL) NOPASSWD:ALL
-    ssh_authorized_keys:
-      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI...
-
-# 3. Base package installation
 package_update: true
-package_upgrade: false # Keep first boot fast (<10s); upgrade during maintenance cycles
+package_upgrade: false
+
 packages:
   - qemu-guest-agent
-  - curl
-  - htop
-  - ca-certificates
+  - python3
 
-# 4. In-guest automated initialization commands
 runcmd:
-  # Ensure QEMU Guest Agent starts immediately for Proxmox IP discovery
   - systemctl enable --now qemu-guest-agent
 ```
 
