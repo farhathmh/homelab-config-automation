@@ -14,7 +14,7 @@ must adhere to these rules.
   - All active development, file updates, bug fixes, and feature additions must take place exclusively on the `dev` branch.
   - **Never commit directly to `main`**.
 - **Promotion to `main` (Test Gate)**:
-  - Changes on `dev` may only be merged into `main` once all tests and validations pass (e.g., `packer validate`, successful test builds, and linting).
+  - Changes on `dev` may only be merged into `main` once all tests and validations pass (e.g., `terraform fmt -check`, `terraform validate`, clean test plans, and linting).
   - Merges into `main` must be clean, verified, and pushed to the remote repository.
 
 ---
@@ -25,7 +25,7 @@ must adhere to these rules.
   - Stage and commit files granularly (`git add <file>` followed by `git commit`).
   - Do not batch unrelated files or multiple disparate configuration updates into a single omnibus commit.
 - **Descriptive Commit Messages**:
-  - Every commit must have a descriptive, conventional commit message clearly explaining the purpose of the change (e.g., `feat(http): ...`, `fix(template): ...`, `chore(config): ...`).
+  - Every commit must have a descriptive, conventional commit message clearly explaining the purpose of the change (e.g., `feat(templates): ...`, `docs(arch): ...`, `chore(config): ...`).
 - **Prompt Remote Synchronization**:
   - Push committed updates to the remote repository (`origin dev`) promptly after committing.
 
@@ -34,17 +34,24 @@ must adhere to these rules.
 ## 3. Credential Safety & Zero Leak Policy
 
 - **No Secret Commits**:
-  - Files matching `*.auto.pkrvars.hcl`, `secrets.*`, private keys (`*.key`, `*.pem`), or any files containing live API tokens/passwords must never be tracked or committed to Git.
-  - All secret variable files must be listed in `.gitignore` and kept exclusively on local disk.
+  - Files matching `*.tfvars`, `*.auto.tfvars`, `*.tfstate*`, private keys (`*.key`, `*.pem`), or any files containing live API tokens/passwords must never be tracked or committed to Git.
+  - All secret and state files must be listed in `.gitignore` and kept exclusively on local disk.
 - **Sanitized Examples**:
-  - Always provide and track sanitized example templates (e.g., `secrets.example.pkrvars.hcl`) with dummy values for documentation and onboarding.
+  - Always provide and track sanitized example templates (e.g., `terraform.tfvars.example`) with dummy values for documentation and onboarding.
 
 ---
 
-## 4. Packer & Infrastructure Standards
+## 4. Terraform & Infrastructure Standards
 
 - **Pre-Commit Validation**:
-  - Always run `packer validate -var-file=...` against the target template directory before committing Packer configuration updates.
+  - Always run `terraform fmt -check` and `terraform validate` against the target configuration directory before committing Terraform updates.
 - **Modularity & Standards**:
-  - Align with official HashiCorp Packer and provider documentation.
-  - Keep configuration files modular (`plugins.pkr.hcl`, `variables.pkr.hcl`, `builds.pkr.hcl`, and individual distro templates).
+  - Align with modern Terraform best practices and official `bpg/proxmox` provider documentation.
+  - Keep configuration files modular (`providers.tf`, `variables.tf`, `main.tf`, `outputs.tf`).
+- **Hardware Baselines**:
+  - Chipset: `machine = "q35"` (PCI Express architecture).
+  - Firmware: `bios = "ovmf"` with 4MB raw EFI NVRAM partition (`pre_enrolled_keys = true`).
+  - Storage Controller: `scsi_hardware = "virtio-scsi-single"`.
+  - Disks: `ssd = true` and `discard = "on"` (TRIM pass-through).
+  - Serial Console: `serial_device` socket enabled for headless terminal access via `qm terminal <vmid>`.
+  - Storage Decoupling: Download images to `local-storage` (Directory), store VM disks/EFI on `local-lvm` (LVM-thin).
