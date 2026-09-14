@@ -81,8 +81,8 @@ homelab-config-automation/
 ├── docs/
 │   ├── architecture.md
 │   ├── proxmox-setup.md
-│   ├── cloud-init-guide.md            # documents a "Method B" (custom snippet via
-│   │                                    user_data_file_id) that is NOT wired up in any .tf file
+│   ├── cloud-init-guide.md            # documents Method A/B; Method B now matches the real
+│   │                                    proxmox_virtual_environment_file resource in instances/
 │   └── adding-a-new-template.md
 └── terraform/
     ├── templates/                     # Layer 1 — golden template builder
@@ -94,12 +94,21 @@ homelab-config-automation/
     │   └── terraform.tfvars.example
     ├── modules/vm-instance/           # Layer 2 module — clones a template into a sized VM
     │   ├── main.tf                    # fully parameterized: cores, memory, disk_size, ipv4,
-    │   │                                vlan_id, ci_username, user_data_file_id, etc.
+    │   │                                vlan_id, ci_username, user_data_file_id, etc. — and,
+    │   │                                since the fix below, machine/bios/efi_disk/scsi_hardware
+    │   │                                match the golden template's hardware baseline.
     │   ├── variables.tf
-    │   └── outputs.tf                 # ⚠ NOT INVOKED ANYWHERE — no root module calls this yet
+    │   └── outputs.tf                 # exposes vm_id, name, ipv4_addresses
+    ├── instances/                     # Layer 2 root module — clones the golden template
+    │   ├── main.tf                    # uploads bootstrap.yaml snippet + for_each over `nodes`
+    │   ├── variables.tf                #   nodes map: docker-ubuntu-node, k8s-ctrl-node1,
+    │   │                                #   k8s-worker-node{1,2} — static IPs 10.10.10.50-53/24,
+    │   │                                #   vmids 500-503, clone_vm_id default 9002
+    │   ├── outputs.tf / providers.tf
+    │   └── terraform.tfvars.example
     └── snippets/
-        ├── base-ubuntu.yaml           # ⚠ DEAD FILE — never uploaded to Proxmox, never referenced
-        └── base-debian.yaml           # ⚠ DEAD FILE — same issue
+        └── bootstrap.yaml             # minimal first-boot bootstrap: qemu-guest-agent + python3
+                                          only, nothing role-specific — uploaded by instances/
 ```
 
 Known gaps:
@@ -107,46 +116,42 @@ Known gaps:
    blocks~~ — **done**: refactored to `for_each` over `var.templates`
    filtered by `var.active_templates` (default: `["resolute"]`). See
    `docs/adding-a-new-template.md` for the new map-entry workflow.
-   ⚠ **Live-state migration not yet done** — see note below.
-2. `terraform/modules/vm-instance` exists and is fully wired for
-   `user_data_file_id`, but nothing calls it — there is no root module that
-   consumes it yet (no `terraform/instances/`).
-3. `terraform/snippets/*.yaml` are written but not uploaded via
-   `proxmox_virtual_environment_file`, and no `.tf` file sets
-   `user_data_file_id` — cloned VMs currently get zero package installation
-   from cloud-init beyond the built-in `user_account` block. (A prior attempt
-   at this — commits `4149041`..`1ee0ca4` — was reverted in `b99f6b8` because
-   it mixed role-specific config into the snippet and delivered it via an
-   out-of-band `scp` Makefile step instead of a real
-   `proxmox_virtual_environment_file` resource. Don't repeat either mistake.)
+   Live-state migration for the 4 already-built templates is done too (8
+   `terraform state mv` commands, verified with a clean `terraform plan`).
+2. ~~`terraform/modules/vm-instance` existed but nothing called it~~ —
+   **done**: `terraform/instances/` now calls it via `for_each` over the
+   4-node map. While wiring this up, a real bug was found and fixed: the
+   module never set `machine`/`bios`/`scsi_hardware`/`efi_disk`, so
+   Terraform was explicitly overwriting every clone's inherited config with
+   its own resource defaults (`bios=seabios`, `scsi_hardware=virtio-scsi-pci`,
+   no EFI disk) instead of matching the OVMF/q35 golden template — confirmed
+   via a live `terraform plan` against the real cluster before the fix.
+   Fixed to match `templates/main.tf`'s baseline exactly.
+3. ~~`terraform/snippets/*.yaml` were dead files, nothing set
+   `user_data_file_id`~~ — **done**: replaced with one minimal
+   `bootstrap.yaml` (qemu-guest-agent + python3 only), uploaded via a real
+   `proxmox_virtual_environment_file` resource in `terraform/instances/`
+   and wired into every node's `user_data_file_id`. (A prior fuller attempt
+   — commits `4149041`..`1ee0ca4` — was reverted in `b99f6b8` because it
+   mixed role-specific config into the snippet and delivered it via an
+   out-of-band `scp` Makefile step instead of a real Terraform resource.
+   Neither mistake was repeated: content stays bootstrap-only, delivery is
+   a real `proxmox_virtual_environment_file` resource.)
 4. There is no `ansible/` directory yet.
+5. `terraform/instances/` is scaffolded and verified against the live
+   cluster (`terraform plan`: 5 to add, 0 to change, 0 to destroy) but has
+   **not been applied** — left for the owner to run. The assumed gateway
+   `10.10.10.1` for all 4 nodes was not explicitly confirmed (only the IP
+   range and vmid range were) — worth a glance in `variables.tf`'s `nodes`
+   map before applying.
 
-**⚠ Pending: live-state migration for the templates `for_each` refactor.**
-All 4 templates (vmid 9000/9002/9010/9012) are already built in Proxmox and
-tracked in `terraform/templates/terraform.tfstate` under the old flat
-resource addresses (e.g. `proxmox_virtual_environment_vm.ubuntu_2404_template`).
-The new addresses are `proxmox_virtual_environment_vm.template["noble"]`
-etc. Running `terraform apply` before remapping state will try to destroy
-the old-address resources and create new ones at the same vmids — for
-`ubuntu_2604_template`/`template["resolute"]` (same vmid 9002) this can
-race or fail outright ("VM 9002 already exists"). Before any apply:
-```bash
-cd terraform/templates
-terraform state mv 'proxmox_download_file.ubuntu_2404_cloud_image'  'proxmox_download_file.cloud_image["noble"]'
-terraform state mv 'proxmox_download_file.ubuntu_2604_cloud_image'  'proxmox_download_file.cloud_image["resolute"]'
-terraform state mv 'proxmox_download_file.debian_12_cloud_image'    'proxmox_download_file.cloud_image["bookworm"]'
-terraform state mv 'proxmox_download_file.debian_13_cloud_image'    'proxmox_download_file.cloud_image["trixie"]'
-terraform state mv 'proxmox_virtual_environment_vm.ubuntu_2404_template' 'proxmox_virtual_environment_vm.template["noble"]'
-terraform state mv 'proxmox_virtual_environment_vm.ubuntu_2604_template' 'proxmox_virtual_environment_vm.template["resolute"]'
-terraform state mv 'proxmox_virtual_environment_vm.debian_12_template'   'proxmox_virtual_environment_vm.template["bookworm"]'
-terraform state mv 'proxmox_virtual_environment_vm.debian_13_template'   'proxmox_virtual_environment_vm.template["trixie"]'
-terraform plan   # must show "No changes" once active_templates covers all 4
-```
-`terraform.tfvars` currently overrides `active_templates` to all 4 so a plan
-stays a no-op during this transition. Narrowing to just `["resolute"]` for
-real (to actually destroy noble/bookworm/trixie in Proxmox, freeing vmids
-9000/9010/9012) is a separate, deliberate decision — do it with
-`terraform plan` reviewed first, not as a side effect of this refactor.
+**Note on the templates live-state migration (done):** the real
+`terraform/templates/terraform.tfvars` still overrides
+`active_templates = ["noble","resolute","bookworm","trixie"]` (all 4) so
+that `terraform plan` in `templates/` stays a no-op. Narrowing to just
+`["resolute"]` for real — which would destroy noble/bookworm/trixie in
+Proxmox and free vmids 9000/9010/9012 — is a separate, deliberate decision
+for the owner, not something to do as a side effect of other work.
 
 ## 4. Planned / not yet implemented
 
@@ -174,25 +179,21 @@ not a `terraform_remote_state` lookup into `templates/`'s state.)
 
 **Structural changes planned, in reviewable order:**
 
-1. ~~**`for_each` refactor of templates**~~ — **done.** See section 3's
-   "Known gaps" #1 for the live-state migration still required before the
-   next `terraform apply` in `templates/`.
-2. **`terraform/instances/` scaffold** — new root module (separate
-   Terraform state from `templates/`, since template and instance
-   lifecycles differ) that calls the existing `vm-instance` module via
-   `for_each` over a `nodes` map (the table above), with `clone_vm_id`
-   defaulting to `9002`. Needs a `proxmox_virtual_environment_file` upload
-   for the bootstrap snippet (step 3) to be functionally complete — plan to
-   land 2 and 3 together, not strictly sequentially.
-3. **cloud-init bootstrap fix** — `terraform/snippets/base-ubuntu.yaml` /
-   `base-debian.yaml` → replaced by one minimal static `bootstrap.yaml`
-   (no templating needed — content is identical for every node under the
-   "nothing role-specific" rule below), uploaded via
-   `proxmox_virtual_environment_file`, wired into `user_data_file_id`. Its
-   only job: `qemu-guest-agent` + `python3` (so Ansible can reach the box) +
-   enabling the agent. Nothing role-specific goes here — see the reverted
-   `erenyx-base.yaml` attempt noted in section 3's "Known gaps" #3 for what
-   NOT to do (no `users:`, no groups, no MOTD/write_files in this snippet).
+1. ~~**`for_each` refactor of templates**~~ — **done.**
+2. ~~**`terraform/instances/` scaffold**~~ — **done.** New root module
+   (separate state from `templates/`) calls `vm-instance` via `for_each`
+   over the `nodes` map, `clone_vm_id` defaulting to `9002`. Landed
+   together with step 3 as planned. Verified against the live cluster
+   (`terraform plan`: 5 to add, 0 to change, 0 to destroy) but **not
+   applied** — left for the owner. While wiring this up, found and fixed a
+   real bug in `vm-instance` (missing hardware baseline — see "Known gaps"
+   #2 above).
+3. ~~**cloud-init bootstrap fix**~~ — **done.** `base-ubuntu.yaml` /
+   `base-debian.yaml` replaced by one minimal static `bootstrap.yaml`
+   (qemu-guest-agent + python3 only), uploaded via a real
+   `proxmox_virtual_environment_file` resource in `terraform/instances/`
+   and wired into `user_data_file_id`. No templating needed — content is
+   identical for every node under the "nothing role-specific" rule.
 4. **Ansible scaffold** — new `ansible/` directory does everything
    currently described as "base config / node-specific config / security
    config":
