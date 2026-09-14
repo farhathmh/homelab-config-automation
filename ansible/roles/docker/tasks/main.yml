@@ -1,0 +1,66 @@
+---
+- name: Install Docker prerequisites
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - gnupg
+    state: present
+    update_cache: true
+
+- name: Create APT keyrings directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+- name: Add Docker's official GPG key
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    mode: "0644"
+
+- name: Add Docker APT repository
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}
+      signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu
+      {{ ansible_distribution_release }} stable
+    state: present
+    filename: docker
+
+- name: Install Docker Engine
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+    update_cache: true
+
+- name: Add ci_username to the docker group
+  ansible.builtin.user:
+    name: "{{ ci_username }}"
+    groups: docker
+    append: true
+
+- name: Ensure Docker service is enabled and running
+  ansible.builtin.systemd:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Render Docker-node banner
+  ansible.builtin.command: figlet "Docker Node"
+  register: docker_banner
+  changed_when: false
+
+- name: Deploy Docker-node MOTD
+  ansible.builtin.template:
+    src: motd.j2
+    dest: /etc/motd
+    owner: root
+    group: root
+    mode: "0644"
