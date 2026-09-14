@@ -9,3 +9,7 @@ proxmox_api_token_secret = "00000000-0000-0000-0000-000000000000"
 
 # Target Proxmox node name
 proxmox_node = "pve1"
+
+# Serial port socket for terminal monitoring via 'qm terminal <vmid>' (set false on main/prod if disabled)
+enable_serial_console = true
+
