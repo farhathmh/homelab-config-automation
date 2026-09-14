@@ -76,3 +76,11 @@ variable "iso_checksum" {
   default     = "file:https://releases.ubuntu.com/26.04/SHA256SUMS"
   description = "Checksum or checksum file URL for the ISO"
 }
+
+# Serial console configuration
+variable "enable_serial_console" {
+  type        = bool
+  default     = true
+  description = "Attach a serial0 socket port and configure serial console for terminal monitoring via qm terminal"
+}
+
