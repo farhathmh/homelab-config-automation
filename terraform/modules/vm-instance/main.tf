@@ -30,6 +30,20 @@ resource "proxmox_virtual_environment_vm" "instance" {
     full  = var.full_clone
   }
 
+  # Hardware baseline (must match the golden template — otherwise Terraform
+  # explicitly overwrites the clone's inherited bios/scsi_hardware with its
+  # own resource defaults, which don't match an OVMF/q35 template's disk).
+  machine = "q35"
+  bios    = "ovmf"
+
+  efi_disk {
+    datastore_id      = var.datastore_id
+    type              = "4m"
+    pre_enrolled_keys = true
+  }
+
+  scsi_hardware = "virtio-scsi-single"
+
   cpu {
     cores = var.cores
     type  = "host"
