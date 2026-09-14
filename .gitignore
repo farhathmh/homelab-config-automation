@@ -1,0 +1,25 @@
+# ==============================================================================
+# Homelab Automation Git Ignore Rules
+# ==============================================================================
+
+# Local archive directory containing previous template code and history
+archive/
+
+# Ignore all actual secret variable files containing tokens, passwords, or keys
+*.auto.pkrvars.hcl
+*.pkrvars.hcl
+secrets.*
+
+# Explicitly allow tracking sanitized example variable templates
+!*.example.pkrvars.hcl
+
+# Ignore local Packer and OS cache directories
+.cache/
+packer_cache/
+*.iso
+
+# Ignore crash logs and runtime artifacts
+crash.log
+*.log
+scratch/
+.system_generated/
