@@ -69,8 +69,7 @@ resource "proxmox_virtual_environment_vm" "ubuntu_2404_template" {
   }
 
   initialization {
-    datastore_id      = var.proxmox_storage_pool
-    user_data_file_id = var.ci_user_data_file_id
+    datastore_id = var.proxmox_storage_pool
     ip_config {
       ipv4 {
         address = "dhcp"
@@ -146,8 +145,7 @@ resource "proxmox_virtual_environment_vm" "ubuntu_2604_template" {
   }
 
   initialization {
-    datastore_id      = var.proxmox_storage_pool
-    user_data_file_id = var.ci_user_data_file_id
+    datastore_id = var.proxmox_storage_pool
     ip_config {
       ipv4 {
         address = "dhcp"
@@ -223,8 +221,7 @@ resource "proxmox_virtual_environment_vm" "debian_12_template" {
   }
 
   initialization {
-    datastore_id      = var.proxmox_storage_pool
-    user_data_file_id = var.ci_user_data_file_id
+    datastore_id = var.proxmox_storage_pool
     ip_config {
       ipv4 {
         address = "dhcp"
@@ -300,8 +297,7 @@ resource "proxmox_virtual_environment_vm" "debian_13_template" {
   }
 
   initialization {
-    datastore_id      = var.proxmox_storage_pool
-    user_data_file_id = var.ci_user_data_file_id
+    datastore_id = var.proxmox_storage_pool
     ip_config {
       ipv4 {
         address = "dhcp"

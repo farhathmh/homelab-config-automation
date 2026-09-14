@@ -60,12 +60,6 @@ variable "ssh_public_key" {
   description = "SSH public key string injected into the template for passwordless authentication"
 }
 
-variable "ci_user_data_file_id" {
-  type        = string
-  default     = "local-storage:snippets/erenyx-base.yaml"
-  description = "Proxmox storage ID for the custom Cloud-Init user-data snippet"
-}
-
 # --- Ubuntu 24.04 LTS (Noble) Cloud Template Variables ---
 
 variable "ubuntu_2404_vmid" {

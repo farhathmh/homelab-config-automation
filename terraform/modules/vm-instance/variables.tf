@@ -96,8 +96,8 @@ variable "ssh_public_key" {
 
 variable "user_data_file_id" {
   type        = string
-  default     = "local-storage:snippets/erenyx-base.yaml"
-  description = "Proxmox file ID for the custom Cloud-Init YAML snippet"
+  default     = null
+  description = "Optional Proxmox file ID for a custom Cloud-Init YAML snippet"
 }
 
 variable "start_on_boot" {
