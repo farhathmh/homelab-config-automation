@@ -1,0 +1,11 @@
+---
+ansible_user: erenyx
+ansible_python_interpreter: /usr/bin/python3
+
+# Matches terraform/instances/variables.tf's ci_username default.
+ci_username: erenyx
+
+# Latest stable Kubernetes minor as of 2026-09-14 (kubernetes.io/releases).
+# Bump this (and re-run) to move to a newer minor; kubeadm/kubelet/kubectl
+# are held at this version by k8s_control/k8s_worker until then.
+kubernetes_apt_version: "v1.37"
