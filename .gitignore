@@ -1,25 +1,44 @@
 # ==============================================================================
-# Homelab Automation Git Ignore Rules
+# Homelab Automation Git Ignore Rules (Terraform & Infrastructure)
 # ==============================================================================
 
-# Local archive directory containing previous template code and history
-archive/
-
-# Ignore all actual secret variable files containing tokens, passwords, or keys
-*.auto.pkrvars.hcl
-*.pkrvars.hcl
-secrets.*
-
-# Explicitly allow tracking sanitized example variable templates
-!*.example.pkrvars.hcl
-
-# Ignore local Packer and OS cache directories
+# Local .terraform directories and plugin cache
+**/.terraform/*
+.terraform/
 .cache/
-packer_cache/
-*.iso
 
-# Ignore crash logs and runtime artifacts
+# Terraform runtime state files
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+
+# Crash logs and runtime artifacts
 crash.log
+crash.*.log
 *.log
 scratch/
 .system_generated/
+
+# Sensitive variable files containing live credentials/tokens
+*.tfvars
+*.auto.tfvars
+*.tfvars.json
+*.auto.tfvars.json
+secrets.*
+*.key
+*.pem
+
+# Explicitly allow tracking sanitized example variable files
+!*.example.tfvars
+!*.example.pkrvars.hcl
+
+# Local overrides
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# CLI configuration files
+.terraformrc
+terraform.rc
+
