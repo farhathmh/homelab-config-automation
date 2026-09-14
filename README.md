@@ -46,9 +46,15 @@ homelab-config-automation/
 │   │       ├── variables.tf
 │   │       └── outputs.tf
 │   │
+│   ├── instances/                     # Layer 2: clones the golden template into sized nodes
+│   │   ├── main.tf                    # Uploads the bootstrap snippet + for_each over `nodes`
+│   │   ├── variables.tf               # `nodes` map: docker/k8s_control/k8s_worker, static IPs
+│   │   ├── outputs.tf
+│   │   ├── providers.tf
+│   │   └── terraform.tfvars.example
+│   │
 │   └── snippets/                      # Custom Cloud-Init YAML definitions (cloud-init.io)
-│       ├── base-ubuntu.yaml           # Baseline config (agent, curl, htop, etc.)
-│       └── base-debian.yaml
+│       └── bootstrap.yaml             # Minimal first-boot bootstrap (agent + python3 only)
 │
 ├── GEMINI.md                          # Repository workflow rules and test gates
 └── .gitignore                         # Strict exclusion boundaries for state and secrets
@@ -97,6 +103,27 @@ terraform -chdir=terraform/templates init
 terraform -chdir=terraform/templates validate
 terraform -chdir=terraform/templates apply
 ```
+
+### 4. Clone the Template into Sized Instances
+
+`terraform/instances/` is a separate root module/state — it clones the
+golden template (vmid `9002` by default) into the 4-node set defined in
+`variables.tf`'s `nodes` map, and uploads/wires the minimal cloud-init
+bootstrap snippet (`terraform/snippets/bootstrap.yaml`) into each one.
+
+```bash
+cp terraform/instances/terraform.tfvars.example terraform/instances/terraform.tfvars
+# edit terraform.tfvars with your live cluster values, same as step 2 above
+
+terraform -chdir=terraform/instances init
+terraform -chdir=terraform/instances validate
+terraform -chdir=terraform/instances plan
+terraform -chdir=terraform/instances apply
+```
+
+There's no `ansible/` layer yet (planned — see `CLAUDE.md`), so a freshly
+cloned node only has `qemu-guest-agent` and `python3` — enough to be
+reachable, nothing role-specific configured.
 
 ---
 
