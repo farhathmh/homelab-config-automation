@@ -60,30 +60,58 @@ variable "ssh_public_key" {
   description = "SSH public key string injected into the template for passwordless authentication"
 }
 
-# --- Ubuntu 24.04 LTS Cloud Template Variables ---
+# --- Ubuntu 24.04 LTS (Noble) Cloud Template Variables ---
 
-variable "ubuntu_vmid" {
+variable "ubuntu_2404_vmid" {
   type        = number
   default     = 9000
   description = "Proxmox VM ID for the Ubuntu 24.04 LTS golden template"
 }
 
-variable "ubuntu_cloud_image_url" {
+variable "ubuntu_2404_cloud_image_url" {
   type        = string
   default     = "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img"
   description = "Download URL for the official Ubuntu 24.04 LTS Noble Server cloud image"
 }
 
-# --- Debian 12 Bookworm Cloud Template Variables ---
+# --- Ubuntu 26.04 LTS (Resolute) Cloud Template Variables ---
 
-variable "debian_vmid" {
+variable "ubuntu_2604_vmid" {
+  type        = number
+  default     = 9002
+  description = "Proxmox VM ID for the Ubuntu 26.04 LTS golden template"
+}
+
+variable "ubuntu_2604_cloud_image_url" {
+  type        = string
+  default     = "https://cloud-images.ubuntu.com/resolute/current/resolute-server-cloudimg-amd64.img"
+  description = "Download URL for the official Ubuntu 26.04 LTS Resolute Server cloud image"
+}
+
+# --- Debian 12 (Bookworm) Cloud Template Variables ---
+
+variable "debian_12_vmid" {
   type        = number
   default     = 9010
   description = "Proxmox VM ID for the Debian 12 Bookworm golden template"
 }
 
-variable "debian_cloud_image_url" {
+variable "debian_12_cloud_image_url" {
   type        = string
   default     = "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-genericcloud-amd64.qcow2"
   description = "Download URL for the official Debian 12 Bookworm GenericCloud image"
+}
+
+# --- Debian 13 (Trixie) Cloud Template Variables ---
+
+variable "debian_13_vmid" {
+  type        = number
+  default     = 9012
+  description = "Proxmox VM ID for the Debian 13 Trixie golden template"
+}
+
+variable "debian_13_cloud_image_url" {
+  type        = string
+  default     = "https://cloud.debian.org/images/cloud/trixie/daily/latest/debian-13-genericcloud-amd64-daily.qcow2"
+  description = "Download URL for the official Debian 13 Trixie GenericCloud image"
 }

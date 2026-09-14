@@ -21,6 +21,9 @@ proxmox_bridge       = "vmbr0"
 ci_username    = "erenyx"
 ssh_public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... user@homelab"
 
-# Distribution Template Customizations (Optional)
-ubuntu_vmid = 9000
-debian_vmid = 9010
+# Distribution Template VM IDs (Optional overrides)
+ubuntu_2404_vmid = 9000
+ubuntu_2604_vmid = 9002
+debian_12_vmid   = 9010
+debian_13_vmid   = 9012
+
