@@ -1,0 +1,8 @@
+---
+# Kept as its own playbook (imported by site.yml, but also runnable on its
+# own via `ansible-playbook playbooks/security.yml`) so hardening can be
+# re-applied independently of base/role configuration.
+- name: Security hardening
+  hosts: all
+  roles:
+    - security
