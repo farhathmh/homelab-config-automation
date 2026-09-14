@@ -1,0 +1,26 @@
+# ==============================================================================
+# Example Proxmox Template Configuration Variables
+# ==============================================================================
+# Copy this file to terraform.tfvars and customize with your live cluster values:
+#   cp terraform.tfvars.example terraform.tfvars
+# Note: terraform.tfvars is ignored by Git to prevent credential leaks.
+# ==============================================================================
+
+# Proxmox VE API Connection
+proxmox_endpoint  = "https://10.10.10.10:8006/"
+proxmox_api_token = "terraform@pve!terraform-token=00000000-0000-0000-0000-000000000000"
+proxmox_insecure  = true
+proxmox_node      = "pve1"
+
+# Proxmox Storage Pools
+proxmox_storage_pool = "local-lvm"
+proxmox_iso_pool     = "local-storage"
+proxmox_bridge       = "vmbr0"
+
+# Default Cloud-Init Administrator & SSH Key
+ci_username    = "erenyx"
+ssh_public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... user@homelab"
+
+# Distribution Template Customizations (Optional)
+ubuntu_vmid = 9000
+debian_vmid = 9010
