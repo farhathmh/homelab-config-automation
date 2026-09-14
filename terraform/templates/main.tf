@@ -15,11 +15,11 @@
 # ==============================================================================
 
 resource "proxmox_download_file" "ubuntu_2404_cloud_image" {
-  content_type = "iso"
+  content_type = "import"
   datastore_id = var.proxmox_iso_pool
   node_name    = var.proxmox_node
   url          = var.ubuntu_2404_cloud_image_url
-  file_name    = "ubuntu-24.04-server-cloudimg-amd64.img"
+  file_name    = "ubuntu-24.04-server-cloudimg-amd64.qcow2"
 }
 
 resource "proxmox_virtual_environment_vm" "ubuntu_2404_template" {
@@ -91,11 +91,11 @@ resource "proxmox_virtual_environment_vm" "ubuntu_2404_template" {
 # ==============================================================================
 
 resource "proxmox_download_file" "ubuntu_2604_cloud_image" {
-  content_type = "iso"
+  content_type = "import"
   datastore_id = var.proxmox_iso_pool
   node_name    = var.proxmox_node
   url          = var.ubuntu_2604_cloud_image_url
-  file_name    = "ubuntu-26.04-server-cloudimg-amd64.img"
+  file_name    = "ubuntu-26.04-server-cloudimg-amd64.qcow2"
 }
 
 resource "proxmox_virtual_environment_vm" "ubuntu_2604_template" {
@@ -167,7 +167,7 @@ resource "proxmox_virtual_environment_vm" "ubuntu_2604_template" {
 # ==============================================================================
 
 resource "proxmox_download_file" "debian_12_cloud_image" {
-  content_type = "iso"
+  content_type = "import"
   datastore_id = var.proxmox_iso_pool
   node_name    = var.proxmox_node
   url          = var.debian_12_cloud_image_url
@@ -243,7 +243,7 @@ resource "proxmox_virtual_environment_vm" "debian_12_template" {
 # ==============================================================================
 
 resource "proxmox_download_file" "debian_13_cloud_image" {
-  content_type = "iso"
+  content_type = "import"
   datastore_id = var.proxmox_iso_pool
   node_name    = var.proxmox_node
   url          = var.debian_13_cloud_image_url
