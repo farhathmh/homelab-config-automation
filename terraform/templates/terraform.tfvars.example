@@ -21,9 +21,8 @@ proxmox_bridge       = "vmbr0"
 ci_username    = "erenyx"
 ssh_public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... user@homelab"
 
-# Distribution Template VM IDs (Optional overrides)
-ubuntu_2404_vmid = 9000
-ubuntu_2604_vmid = 9002
-debian_12_vmid   = 9010
-debian_13_vmid   = 9012
+# Which golden templates to actually build this apply (default: just Resolute).
+# All known distro definitions live in variables.tf's `templates` map default;
+# add keys here to opt more of them in, e.g.:
+# active_templates = ["resolute", "bookworm"]
 
