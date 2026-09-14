@@ -60,58 +60,57 @@ variable "ssh_public_key" {
   description = "SSH public key string injected into the template for passwordless authentication"
 }
 
-# --- Ubuntu 24.04 LTS (Noble) Cloud Template Variables ---
+# --- Golden Template Definitions ---
 
-variable "ubuntu_2404_vmid" {
-  type        = number
-  default     = 9000
-  description = "Proxmox VM ID for the Ubuntu 24.04 LTS golden template"
+variable "templates" {
+  type = map(object({
+    vmid            = number
+    file_name       = string
+    cloud_image_url = string
+    display_name    = string
+    description     = string
+  }))
+  description = <<-EOT
+    Map of every known golden template definition, keyed by distro codename.
+    Defining an entry here does not build it — only keys listed in
+    var.active_templates are actually created. This lets Debian/Ubuntu-24.04
+    stay available as opt-in without being deleted from the codebase.
+  EOT
+
+  default = {
+    noble = {
+      vmid            = 9000
+      file_name       = "ubuntu-24.04-server-cloudimg-amd64.qcow2"
+      cloud_image_url = "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img"
+      display_name    = "ubuntu-2404-cloud-template"
+      description     = "Ubuntu 24.04 LTS (Noble) Cloud-Init Template (Q35, OVMF UEFI, VirtIO SCSI Single) built by Terraform"
+    }
+    resolute = {
+      vmid            = 9002
+      file_name       = "ubuntu-26.04-server-cloudimg-amd64.qcow2"
+      cloud_image_url = "https://cloud-images.ubuntu.com/resolute/current/resolute-server-cloudimg-amd64.img"
+      display_name    = "ubuntu-2604-cloud-template"
+      description     = "Ubuntu 26.04 LTS (Resolute) Cloud-Init Template (Q35, OVMF UEFI, VirtIO SCSI Single) built by Terraform"
+    }
+    bookworm = {
+      vmid            = 9010
+      file_name       = "debian-12-genericcloud-amd64.qcow2"
+      cloud_image_url = "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-genericcloud-amd64.qcow2"
+      display_name    = "debian-12-cloud-template"
+      description     = "Debian 12 Bookworm Cloud-Init Template (Q35, OVMF UEFI, VirtIO SCSI Single) built by Terraform"
+    }
+    trixie = {
+      vmid            = 9012
+      file_name       = "debian-13-genericcloud-amd64-daily.qcow2"
+      cloud_image_url = "https://cloud.debian.org/images/cloud/trixie/daily/latest/debian-13-genericcloud-amd64-daily.qcow2"
+      display_name    = "debian-13-cloud-template"
+      description     = "Debian 13 Trixie Cloud-Init Template (Q35, OVMF UEFI, VirtIO SCSI Single) built by Terraform"
+    }
+  }
 }
 
-variable "ubuntu_2404_cloud_image_url" {
-  type        = string
-  default     = "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img"
-  description = "Download URL for the official Ubuntu 24.04 LTS Noble Server cloud image"
-}
-
-# --- Ubuntu 26.04 LTS (Resolute) Cloud Template Variables ---
-
-variable "ubuntu_2604_vmid" {
-  type        = number
-  default     = 9002
-  description = "Proxmox VM ID for the Ubuntu 26.04 LTS golden template"
-}
-
-variable "ubuntu_2604_cloud_image_url" {
-  type        = string
-  default     = "https://cloud-images.ubuntu.com/resolute/current/resolute-server-cloudimg-amd64.img"
-  description = "Download URL for the official Ubuntu 26.04 LTS Resolute Server cloud image"
-}
-
-# --- Debian 12 (Bookworm) Cloud Template Variables ---
-
-variable "debian_12_vmid" {
-  type        = number
-  default     = 9010
-  description = "Proxmox VM ID for the Debian 12 Bookworm golden template"
-}
-
-variable "debian_12_cloud_image_url" {
-  type        = string
-  default     = "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-genericcloud-amd64.qcow2"
-  description = "Download URL for the official Debian 12 Bookworm GenericCloud image"
-}
-
-# --- Debian 13 (Trixie) Cloud Template Variables ---
-
-variable "debian_13_vmid" {
-  type        = number
-  default     = 9012
-  description = "Proxmox VM ID for the Debian 13 Trixie golden template"
-}
-
-variable "debian_13_cloud_image_url" {
-  type        = string
-  default     = "https://cloud.debian.org/images/cloud/trixie/daily/latest/debian-13-genericcloud-amd64-daily.qcow2"
-  description = "Download URL for the official Debian 13 Trixie GenericCloud image"
+variable "active_templates" {
+  type        = set(string)
+  default     = ["resolute"]
+  description = "Keys from var.templates to actually build in this apply. Keys left out stay defined but are not created (or are removed from state if previously applied — see docs before narrowing this on a cluster with existing templates)."
 }
