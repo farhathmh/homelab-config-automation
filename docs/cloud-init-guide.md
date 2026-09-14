@@ -62,7 +62,7 @@ Ideal for advanced configuration adhering to the full [cloud-init.io](https://cl
 ```hcl
 initialization {
   datastore_id      = "local-lvm"
-  user_data_file_id = proxmox_virtual_environment_file.user_data_snippet.id
+  user_data_file_id = "local-storage:snippets/erenyx-base.yaml"
 }
 ```
 
@@ -70,38 +70,39 @@ initialization {
 
 ## 3. Standard `cloud-init.io` Schema Structure
 
-Custom snippets in `terraform/snippets/` adhere to the standard schema:
+The unified baseline snippet located at `terraform/snippets/erenyx-base.yaml` provides a production-grade initial setup:
 
 ```yaml
 #cloud-config
-# 1. Host identity
-preserve_hostname: false
-fqdn: server.homelab.internal
-
-# 2. User management and SSH key injection
-users:
-  - default
-  - name: erenyx
-    groups: [sudo, docker]
-    shell: /bin/bash
-    sudo: ALL=(ALL) NOPASSWD:ALL
-    ssh_authorized_keys:
-      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI...
-
-# 3. Base package installation
+# 1. Base package installation
 package_update: true
-package_upgrade: false # Keep first boot fast (<10s); upgrade during maintenance cycles
+package_upgrade: false
 packages:
   - qemu-guest-agent
-  - curl
   - htop
-  - ca-certificates
+  - tmux
+  - figlet
+  - curl
 
-# 4. In-guest automated initialization commands
+# 2. In-guest automated initialization commands
 runcmd:
-  # Ensure QEMU Guest Agent starts immediately for Proxmox IP discovery
+  - systemctl daemon-reload
   - systemctl enable --now qemu-guest-agent
+  - chmod +x /etc/profile.d/99-erenyx-motd.sh
+
+# 3. Custom Dynamic "Erenyx-Lab" MOTD Greeting
+write_files:
+  - path: /etc/profile.d/99-erenyx-motd.sh
+    permissions: '0755'
+    owner: root:root
+    content: |
+      #!/bin/bash
+      [[ $- != *i* ]] && return
+      # Displays figlet "Erenyx-Lab" ASCII art and system telemetry (Host, OS, IP, Uptime, Memory, Disk)
 ```
+
+### Automation via `make apply`
+Snippets are stored on the Proxmox host under `/var/lib/vz/snippets/` (`local-storage:snippets/`). The root `Makefile` automatically synchronizes `erenyx-base.yaml` to Proxmox before every `make apply` or `make plan`, requiring zero manual file transfers.
 
 ---
 
