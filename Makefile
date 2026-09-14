@@ -6,7 +6,7 @@ SHELL := /bin/bash
 TEMPLATES_DIR := terraform/templates
 MODULES_DIR := terraform/modules/vm-instance
 
-.PHONY: help init plan apply apply-auto apply-ubuntu-24 apply-ubuntu-26 apply-debian-12 apply-debian-13 destroy fmt validate status
+.PHONY: help init plan apply apply-auto apply-noble apply-resolute apply-bookworm apply-trixie destroy fmt validate status
 
 .DEFAULT_GOAL := help
 
@@ -26,26 +26,30 @@ validate: ## Validate Terraform syntax and configurations
 	terraform -chdir=$(TEMPLATES_DIR) validate
 	terraform -chdir=$(MODULES_DIR) validate
 
-plan: ## Show execution plan for all 4 cloud templates
+plan: ## Show execution plan for the active template set (default: Resolute only)
 	terraform -chdir=$(TEMPLATES_DIR) plan
 
-apply: ## Build all 4 cloud templates (interactive confirmation)
+apply: ## Build the active template set (default: Resolute only; interactive confirmation)
 	terraform -chdir=$(TEMPLATES_DIR) apply
 
-apply-auto: ## Build all 4 cloud templates without confirmation prompt
+apply-auto: ## Build the active template set without confirmation prompt
 	terraform -chdir=$(TEMPLATES_DIR) apply -auto-approve
 
-apply-ubuntu-24: ## Build only the Ubuntu 24.04 LTS (Noble) template
-	terraform -chdir=$(TEMPLATES_DIR) apply -target=proxmox_virtual_environment_vm.ubuntu_2404_template
+# NOTE: these override active_templates to EXACTLY the one distro named, not
+# add to it — review the printed plan before confirming, since a template
+# left out of the override set is proposed for destruction if it currently
+# exists in state.
+apply-noble: ## Build only the Ubuntu 24.04 LTS (Noble) template (opt-in)
+	terraform -chdir=$(TEMPLATES_DIR) apply -var='active_templates=["noble"]'
 
-apply-ubuntu-26: ## Build only the Ubuntu 26.04 LTS (Resolute) template
-	terraform -chdir=$(TEMPLATES_DIR) apply -target=proxmox_virtual_environment_vm.ubuntu_2604_template
+apply-resolute: ## Build only the Ubuntu 26.04 LTS (Resolute) template (default active)
+	terraform -chdir=$(TEMPLATES_DIR) apply -var='active_templates=["resolute"]'
 
-apply-debian-12: ## Build only the Debian 12 (Bookworm) template
-	terraform -chdir=$(TEMPLATES_DIR) apply -target=proxmox_virtual_environment_vm.debian_12_template
+apply-bookworm: ## Build only the Debian 12 (Bookworm) template (opt-in)
+	terraform -chdir=$(TEMPLATES_DIR) apply -var='active_templates=["bookworm"]'
 
-apply-debian-13: ## Build only the Debian 13 (Trixie) template
-	terraform -chdir=$(TEMPLATES_DIR) apply -target=proxmox_virtual_environment_vm.debian_13_template
+apply-trixie: ## Build only the Debian 13 (Trixie) template (opt-in)
+	terraform -chdir=$(TEMPLATES_DIR) apply -var='active_templates=["trixie"]'
 
 destroy: ## Destroy all templates (destructive)
 	terraform -chdir=$(TEMPLATES_DIR) destroy
