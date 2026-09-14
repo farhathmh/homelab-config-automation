@@ -21,4 +21,6 @@ autoinstall:
   late-commands:
     - "echo '${ssh_username} ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/${ssh_username}"
     - "chmod 440 /target/etc/sudoers.d/${ssh_username}"
+    - "echo 'GRUB_CMDLINE_LINUX=\"console=tty0 console=ttyS0,115200n8\"' > /target/etc/default/grub.d/60-serial-console.cfg"
+    - "curtin in-target --target=/target -- update-grub"
   shutdown: reboot
