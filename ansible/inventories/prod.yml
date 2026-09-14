@@ -1,0 +1,19 @@
+---
+# Matches terraform/instances/variables.tf's `nodes` map — update both
+# together if a node is added, renamed, or re-IP'd.
+all:
+  children:
+    docker:
+      hosts:
+        docker-ubuntu-node:
+          ansible_host: 10.10.10.50
+    k8s_control:
+      hosts:
+        k8s-ctrl-node1:
+          ansible_host: 10.10.10.51
+    k8s_workers:
+      hosts:
+        k8s-worker-node1:
+          ansible_host: 10.10.10.52
+        k8s-worker-node2:
+          ansible_host: 10.10.10.53
