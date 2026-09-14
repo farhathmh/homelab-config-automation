@@ -70,15 +70,24 @@ ssh_public_key    = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5... user@host"
 ```
 
 ### 3. Initialize & Deploy Golden Templates
+
+**Using Makefile shortcuts:**
 ```bash
-# Initialize provider
+make init             # Initialize Terraform provider
+make plan             # Review execution plan
+make apply            # Build all 4 templates (~20 seconds)
+
+# Target specific templates:
+make apply-ubuntu-24  # Build only Ubuntu 24.04 LTS (Noble)
+make apply-ubuntu-26  # Build only Ubuntu 26.04 LTS (Resolute)
+make apply-debian-12  # Build only Debian 12 (Bookworm)
+make apply-debian-13  # Build only Debian 13 (Trixie)
+```
+
+**Or using direct Terraform CLI:**
+```bash
 terraform -chdir=terraform/templates init
-
-# Check formatting and syntax
-terraform -chdir=terraform/templates fmt -check
 terraform -chdir=terraform/templates validate
-
-# Create golden templates in ~20 seconds
 terraform -chdir=terraform/templates apply
 ```
 
