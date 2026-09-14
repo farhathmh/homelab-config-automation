@@ -7,7 +7,7 @@ TEMPLATES_DIR := terraform/templates
 MODULES_DIR := terraform/modules/vm-instance
 SNIPPET_FILE := terraform/snippets/erenyx-base.yaml
 PVE_HOST := 10.10.10.10
-PVE_SNIPPETS_DIR := /var/lib/vz/snippets
+PVE_SNIPPETS_DIR := /mnt/local-storage/snippets
 
 .PHONY: help init plan apply apply-auto apply-ubuntu-24 apply-ubuntu-26 apply-debian-12 apply-debian-13 sync-snippets destroy fmt validate status
 
@@ -30,10 +30,10 @@ validate: ## Validate Terraform syntax and configurations
 	terraform -chdir=$(MODULES_DIR) validate
 
 sync-snippets: ## Synchronize Cloud-Init snippet to Proxmox local-storage
-	@echo "==> Synchronizing Cloud-Init snippet to Proxmox ($(PVE_HOST))..."
-	@ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 root@$(PVE_HOST) "mkdir -p $(PVE_SNIPPETS_DIR)"
+	@echo "==> Synchronizing Cloud-Init snippet to Proxmox ($(PVE_HOST):$(PVE_SNIPPETS_DIR))..."
+	@ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 root@$(PVE_HOST) "mkdir -p $(PVE_SNIPPETS_DIR) && rm -f /var/lib/vz/snippets/erenyx-base.yaml"
 	@scp -o StrictHostKeyChecking=no -o ConnectTimeout=5 $(SNIPPET_FILE) root@$(PVE_HOST):$(PVE_SNIPPETS_DIR)/erenyx-base.yaml
-	@echo "==> Snippet synced: local-storage:snippets/erenyx-base.yaml"
+	@echo "==> Snippet synced: local-storage:snippets/erenyx-base.yaml (/mnt/local-storage/snippets/erenyx-base.yaml)"
 
 plan: sync-snippets ## Show execution plan for all 4 cloud templates
 	terraform -chdir=$(TEMPLATES_DIR) plan
