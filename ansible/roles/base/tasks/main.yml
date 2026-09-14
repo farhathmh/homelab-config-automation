@@ -1,0 +1,24 @@
+---
+- name: Install base packages
+  ansible.builtin.apt:
+    name:
+      - tmux
+      - htop
+      - qemu-guest-agent
+      - figlet
+    state: present
+    update_cache: true
+
+- name: Ensure qemu-guest-agent is enabled and running
+  ansible.builtin.systemd:
+    name: qemu-guest-agent
+    state: started
+    enabled: true
+
+- name: Deploy generic MOTD
+  ansible.builtin.template:
+    src: motd.j2
+    dest: /etc/motd
+    owner: root
+    group: root
+    mode: "0644"
