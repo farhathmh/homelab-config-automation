@@ -88,7 +88,7 @@ homelab-config-automation/
     ├── templates/                     # Layer 1 — golden template builder
     │   ├── main.tf                    # for_each over local.active_templates (var.templates
     │   │                                filtered by var.active_templates); default active
-    │   │                                set is just resolute (Ubuntu 26.04, vmid 9002).
+    │   │                                set is just resolute (Ubuntu 26.04, vmid 9000).
     │   │                                noble/bookworm/trixie remain defined as opt-in.
     │   ├── variables.tf / outputs.tf / providers.tf
     │   └── terraform.tfvars.example
@@ -103,7 +103,7 @@ homelab-config-automation/
     │   ├── main.tf                    # uploads bootstrap.yaml snippet + for_each over `nodes`
     │   ├── variables.tf                #   nodes map: docker-ubuntu-node, k8s-ctrl-node1,
     │   │                                #   k8s-worker-node{1,2} — static IPs 10.10.10.50-53/24,
-    │   │                                #   vmids 500-503, clone_vm_id default 9002
+    │   │                                #   vmids 500-503, clone_vm_id default 9000
     │   ├── outputs.tf / providers.tf
     │   └── terraform.tfvars.example
     └── snippets/
@@ -145,13 +145,19 @@ Known gaps:
    range and vmid range were) — worth a glance in `variables.tf`'s `nodes`
    map before applying.
 
-**Note on the templates live-state migration (done):** the real
-`terraform/templates/terraform.tfvars` still overrides
-`active_templates = ["noble","resolute","bookworm","trixie"]` (all 4) so
-that `terraform plan` in `templates/` stays a no-op. Narrowing to just
-`["resolute"]` for real — which would destroy noble/bookworm/trixie in
-Proxmox and free vmids 9000/9010/9012 — is a separate, deliberate decision
-for the owner, not something to do as a side effect of other work.
+**Note on the templates live-state migration (superseded 2026-09-14):** the
+narrowing decision flagged below as a separate/deliberate owner call has now
+been made. The owner manually deleted all 4 template VMs in Proxmox outside
+Terraform (to exercise a clean rebuild), and `terraform/templates/terraform.tfvars`
+now sets `active_templates = ["resolute"]` — only Ubuntu 26.04 gets built
+going forward; noble/bookworm/trixie stay defined in `variables.tf` as
+opt-in but are no longer created by default. At the same time, all 4
+template vmids were renumbered: `resolute` 9002→**9000**, `noble` 9000→9001,
+`trixie` 9012→**9010**, `bookworm` 9010→9011. `terraform/instances/`'s
+`clone_vm_id` (default and the real `terraform.tfvars` override) was updated
+from 9002 to 9000 to match. A `terraform plan` in `templates/` now correctly
+shows 1 to add (resolute only) and 0 to change/destroy — this was verified
+after the edits below.
 
 ## 4. Planned / not yet implemented
 
@@ -174,15 +180,16 @@ hardcoded resources). IPs and vmid range confirmed with the owner:
 
 (IP/vmid assignment above is sequential in listed order — confirm before
 implementing step 2 if a different mapping is wanted. Owner also confirmed:
-static IPs, not DHCP; `clone_vm_id` hardcoded as a var default of `9002`,
-not a `terraform_remote_state` lookup into `templates/`'s state.)
+static IPs, not DHCP; `clone_vm_id` hardcoded as a var default of `9000`
+(renumbered 2026-09-14 — see the note above), not a `terraform_remote_state`
+lookup into `templates/`'s state.)
 
 **Structural changes planned, in reviewable order:**
 
 1. ~~**`for_each` refactor of templates**~~ — **done.**
 2. ~~**`terraform/instances/` scaffold**~~ — **done.** New root module
    (separate state from `templates/`) calls `vm-instance` via `for_each`
-   over the `nodes` map, `clone_vm_id` defaulting to `9002`. Landed
+   over the `nodes` map, `clone_vm_id` defaulting to `9000`. Landed
    together with step 3 as planned. Verified against the live cluster
    (`terraform plan`: 5 to add, 0 to change, 0 to destroy) but **not
    applied** — left for the owner. While wiring this up, found and fixed a
