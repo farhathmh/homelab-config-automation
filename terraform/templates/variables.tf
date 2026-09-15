@@ -79,28 +79,28 @@ variable "templates" {
 
   default = {
     noble = {
-      vmid            = 9000
+      vmid            = 9001
       file_name       = "ubuntu-24.04-server-cloudimg-amd64.qcow2"
       cloud_image_url = "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img"
       display_name    = "ubuntu-2404-cloud-template"
       description     = "Ubuntu 24.04 LTS (Noble) Cloud-Init Template (Q35, OVMF UEFI, VirtIO SCSI Single) built by Terraform"
     }
     resolute = {
-      vmid            = 9002
+      vmid            = 9000
       file_name       = "ubuntu-26.04-server-cloudimg-amd64.qcow2"
       cloud_image_url = "https://cloud-images.ubuntu.com/resolute/current/resolute-server-cloudimg-amd64.img"
       display_name    = "ubuntu-2604-cloud-template"
       description     = "Ubuntu 26.04 LTS (Resolute) Cloud-Init Template (Q35, OVMF UEFI, VirtIO SCSI Single) built by Terraform"
     }
     bookworm = {
-      vmid            = 9010
+      vmid            = 9011
       file_name       = "debian-12-genericcloud-amd64.qcow2"
       cloud_image_url = "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-genericcloud-amd64.qcow2"
       display_name    = "debian-12-cloud-template"
       description     = "Debian 12 Bookworm Cloud-Init Template (Q35, OVMF UEFI, VirtIO SCSI Single) built by Terraform"
     }
     trixie = {
-      vmid            = 9012
+      vmid            = 9010
       file_name       = "debian-13-genericcloud-amd64-daily.qcow2"
       cloud_image_url = "https://cloud.debian.org/images/cloud/trixie/daily/latest/debian-13-genericcloud-amd64-daily.qcow2"
       display_name    = "debian-13-cloud-template"
