@@ -1,0 +1,43 @@
+#cloud-config
+# ==============================================================================
+# Minimal First-Boot Bootstrap — Instance Layer (templated)
+# ==============================================================================
+# Rendered via templatefile() and uploaded as user_data_file_id by
+# terraform/instances/main.tf. Its only job is to get the box reachable for
+# Ansible: the admin user + SSH key, plus qemu-guest-agent (already enabled
+# by the `agent` block, this ensures the package exists) and python3
+# (Ansible's managed-node requirement).
+#
+# The user/key have to live here rather than in the module's `user_account`
+# block: Proxmox drops ciuser/sshkeys entirely once a custom cicustom
+# (= user_data_file_id) snippet is set for the user-data section, so a
+# separate user_account block would be silently ignored — see
+# docs/cloud-init-guide.md.
+#
+# No `default` entry in `users:` below, so the distro image's default user
+# (e.g. `ubuntu`) is not created alongside this one.
+#
+# Nothing else role-specific belongs here. Packages, services, MOTDs, and
+# anything else distro- or role-specific belongs in an Ansible role instead —
+# see CLAUDE.md's "Known gaps" note on why an earlier attempt at a fuller
+# snippet (erenyx-base.yaml) was reverted.
+# ==============================================================================
+
+users:
+  - name: ${ci_username}
+    groups: [sudo]
+    shell: /bin/bash
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+    lock_passwd: true
+    ssh_authorized_keys:
+      - ${ssh_public_key}
+
+package_update: true
+package_upgrade: false
+
+packages:
+  - qemu-guest-agent
+  - python3
+
+runcmd:
+  - systemctl enable --now qemu-guest-agent
