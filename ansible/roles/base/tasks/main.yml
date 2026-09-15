@@ -6,6 +6,7 @@
       - htop
       - qemu-guest-agent
       - toilet
+      - toilet-fonts
     state: present
     update_cache: true
 
