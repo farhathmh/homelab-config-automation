@@ -14,10 +14,10 @@ for how to opt others in.
 
 | Distribution | Source Image Format | Default VM ID | Built by default? | Initialization Engine | Firmware |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Ubuntu 24.04 LTS (Noble)** | Official Canonical `.img` | `9000` | No (opt-in) | Cloud-Init (NoCloud) | OVMF (UEFI 4M) |
-| **Ubuntu 26.04 LTS (Resolute)** | Official Canonical `.img` | `9002` | **Yes** | Cloud-Init (NoCloud) | OVMF (UEFI 4M) |
-| **Debian 12 (Bookworm)** | Official Debian `.qcow2` | `9010` | No (opt-in) | Cloud-Init (NoCloud) | OVMF (UEFI 4M) |
-| **Debian 13 (Trixie)** | Official Debian `.qcow2` | `9012` | No (opt-in) | Cloud-Init (NoCloud) | OVMF (UEFI 4M) |
+| **Ubuntu 24.04 LTS (Noble)** | Official Canonical `.img` | `9001` | No (opt-in) | Cloud-Init (NoCloud) | OVMF (UEFI 4M) |
+| **Ubuntu 26.04 LTS (Resolute)** | Official Canonical `.img` | `9000` | **Yes** | Cloud-Init (NoCloud) | OVMF (UEFI 4M) |
+| **Debian 12 (Bookworm)** | Official Debian `.qcow2` | `9011` | No (opt-in) | Cloud-Init (NoCloud) | OVMF (UEFI 4M) |
+| **Debian 13 (Trixie)** | Official Debian `.qcow2` | `9010` | No (opt-in) | Cloud-Init (NoCloud) | OVMF (UEFI 4M) |
 
 
 ---
@@ -107,7 +107,7 @@ terraform -chdir=terraform/templates apply
 ### 4. Clone the Template into Sized Instances
 
 `terraform/instances/` is a separate root module/state — it clones the
-golden template (vmid `9002` by default) into the 4-node set defined in
+golden template (vmid `9000` by default) into the 4-node set defined in
 `variables.tf`'s `nodes` map, and uploads/wires the minimal cloud-init
 bootstrap snippet (`terraform/snippets/bootstrap.yaml`) into each one.
 
