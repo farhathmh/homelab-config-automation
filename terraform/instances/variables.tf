@@ -60,11 +60,17 @@ variable "ssh_public_key" {
   description = "SSH public key string injected into every cloned instance for passwordless authentication"
 }
 
+variable "ssh_private_key_path" {
+  type        = string
+  default     = "~/.ssh/id_ed25519"
+  description = "Path to the private key (matching var.ssh_public_key) used to SSH into the Proxmox node itself, as root — required by the provider to upload cloud-init snippets (Proxmox has no API endpoint for snippet content)."
+}
+
 # --- Golden Template Reference ---
 
 variable "clone_vm_id" {
   type        = number
-  default     = 9002
+  default     = 9000
   description = "vmid of the golden template to clone from (currently the Ubuntu 26.04 'resolute' template built by terraform/templates/). Hardcoded by design — not cross-referenced from templates/'s state, since template and instance lifecycles are intentionally decoupled. Update manually if the golden template is ever rebuilt under a different vmid."
 }
 
