@@ -1,0 +1,34 @@
+#!/bin/sh
+# Erenyx-Lab MOTD banner — regenerated fresh on every login (this lives in
+# /etc/update-motd.d/, not the static /etc/motd, specifically so it's a
+# genuinely live script, not a one-shot render baked in at ansible-apply
+# time). Named 00-erenyx-banner so it sorts before every stock Ubuntu
+# update-motd.d script, 00-header included ("00-e" < "00-h" lexicographically),
+# putting it in the first block instead of after Ubuntu's own welcome/sysinfo
+# content.
+WIDTH=80
+
+# ANSI-aware centering against a fixed 80-column width (the actual client
+# terminal width isn't reliably knowable from a pre-login MOTD script).
+# Done in awk, not a shell read-loop + ${#var}: the latter measured
+# inconsistently on toilet's border/rainbow output (some lines centered,
+# others not) for reasons not worth chasing further — awk was reliable.
+center() {
+    awk -v width="$WIDTH" '
+    {
+        line = $0
+        plain = line
+        gsub(/\033\[[0-9;]*m/, "", plain)
+        len = length(plain)
+        if (len < width) {
+            pad = int((width - len) / 2)
+            printf "%*s%s\n", pad, "", line
+        } else {
+            print line
+        }
+    }'
+}
+
+toilet -F border -F gay -f slant -k "Erenyx-Lab" | center
+echo
+toilet -F metal -f digital "$(hostname)" | center

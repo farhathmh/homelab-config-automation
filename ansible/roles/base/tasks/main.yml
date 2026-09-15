@@ -17,10 +17,15 @@
     state: started
     enabled: true
 
-# MOTD is rendered once here (not per-role) since it's identical in
-# structure across every node — only the hostname banner differs. The
-# Erenyx-Lab banner is constant; role identity isn't shown at all anymore
-# (dropped by request in favor of just the two banners).
+# The Erenyx-Lab + hostname banners are identical in structure across every
+# node (only the hostname text differs), so this is rendered once here, not
+# per-role. It's deployed as an /etc/update-motd.d/ script (not a static
+# /etc/motd template): PAM shows /run/motd.dynamic (populated by
+# update-motd.d, run in filename order) BEFORE /etc/motd, always — a static
+# /etc/motd can never come first regardless of its content. 00-erenyx-banner
+# sorts ahead of every stock script there (00-header included), which is
+# what actually puts it in the first block. See
+# ansible/roles/base/files/00-erenyx-banner for the render/centering logic.
 #
 # toilet is figlet-format compatible and reads /usr/share/figlet/ for
 # fonts, but "slant"/"digital" are part of figlet's own bundled default
@@ -28,20 +33,18 @@
 # set — ascii12, wideterm, pagga, etc.). figlet is installed above purely
 # as a font-file source for these two names; toilet remains the only
 # binary actually invoked.
-- name: Render Erenyx-Lab banner
-  ansible.builtin.command: toilet -F border -F gay -f slant -k "Erenyx-Lab"
-  register: erenyx_banner
-  changed_when: false
-
-- name: Render hostname banner
-  ansible.builtin.command: toilet -F metal -f digital "{{ inventory_hostname }}"
-  register: hostname_banner
-  changed_when: false
-
-- name: Deploy MOTD
-  ansible.builtin.template:
-    src: motd.j2
+- name: Ensure /etc/motd carries no stale static content
+  ansible.builtin.copy:
+    content: ""
     dest: /etc/motd
     owner: root
     group: root
     mode: "0644"
+
+- name: Deploy Erenyx-Lab MOTD banner script
+  ansible.builtin.copy:
+    src: 00-erenyx-banner
+    dest: /etc/update-motd.d/00-erenyx-banner
+    owner: root
+    group: root
+    mode: "0755"
