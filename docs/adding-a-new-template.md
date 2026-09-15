@@ -15,10 +15,10 @@ distribution mirrors:
 
 | Distribution | Official Image URL Format | Recommended VM ID |
 | :--- | :--- | :--- |
-| **Ubuntu 24.04 LTS** | `https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img` | `9000` |
-| **Ubuntu 26.04 LTS** | `https://cloud-images.ubuntu.com/resolute/current/resolute-server-cloudimg-amd64.img` | `9002` |
-| **Debian 12 Bookworm** | `https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-genericcloud-amd64.qcow2` | `9010` |
-| **Debian 13 Trixie** | `https://cloud.debian.org/images/cloud/trixie/daily/latest/debian-13-genericcloud-amd64-daily.qcow2` | `9012` |
+| **Ubuntu 24.04 LTS** | `https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img` | `9001` |
+| **Ubuntu 26.04 LTS** | `https://cloud-images.ubuntu.com/resolute/current/resolute-server-cloudimg-amd64.img` | `9000` |
+| **Debian 12 Bookworm** | `https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-genericcloud-amd64.qcow2` | `9011` |
+| **Debian 13 Trixie** | `https://cloud.debian.org/images/cloud/trixie/daily/latest/debian-13-genericcloud-amd64-daily.qcow2` | `9010` |
 | **Fedora 40/41 Cloud** | `https://download.fedoraproject.org/pub/fedora/linux/releases/40/Cloud/x86_64/images/...` | `9020` |
 | **Rocky Linux 9** | `https://dl.rockylinux.org/pub/rocky/9/images/x86_64/Rocky-9-GenericCloud-Base.latest.x86_64.qcow2` | `9030` |
 | **Alpine Linux 3.20** | `https://dl-cdn.alpinelinux.org/alpine/v3.20/releases/cloud/generic-alpine-3.20.0-x86_64-bios.qcow2` | `9040` |
