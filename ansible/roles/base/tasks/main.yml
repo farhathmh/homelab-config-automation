@@ -7,6 +7,7 @@
       - qemu-guest-agent
       - toilet
       - toilet-fonts
+      - figlet
     state: present
     update_cache: true
 
@@ -21,26 +22,19 @@
 # Erenyx-Lab banner is constant; role identity isn't shown at all anymore
 # (dropped by request in favor of just the two banners).
 #
-# LANG/LC_ALL are pinned explicitly: toilet needs a UTF-8 locale to load its
-# fonts, but Ubuntu's default sudoers has `Defaults env_reset`, which strips
-# LANG/LC_* from become's environment — so the exact same command that works
-# in an interactive SSH shell fails here with "could not load font slant"
-# unless the locale is set back explicitly. C.UTF-8 is used because it's
-# built into glibc on Ubuntu by default (no locale-gen required), unlike
-# en_US.UTF-8.
+# toilet is figlet-format compatible and reads /usr/share/figlet/ for
+# fonts, but "slant"/"digital" are part of figlet's own bundled default
+# font set, not toilet-fonts (which ships a distinct, differently-named
+# set — ascii12, wideterm, pagga, etc.). figlet is installed above purely
+# as a font-file source for these two names; toilet remains the only
+# binary actually invoked.
 - name: Render Erenyx-Lab banner
   ansible.builtin.command: toilet -F border -F gay -f slant -k "Erenyx-Lab"
-  environment:
-    LANG: C.UTF-8
-    LC_ALL: C.UTF-8
   register: erenyx_banner
   changed_when: false
 
 - name: Render hostname banner
   ansible.builtin.command: toilet -F metal -f digital "{{ inventory_hostname }}"
-  environment:
-    LANG: C.UTF-8
-    LC_ALL: C.UTF-8
   register: hostname_banner
   changed_when: false
 
