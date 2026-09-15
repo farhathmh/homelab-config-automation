@@ -7,7 +7,6 @@
 
 - name: Disable swap
   ansible.builtin.command: swapoff -a
-  when: ansible_swaptotal_mb > 0
   changed_when: true
 
 - name: Comment out swap entries in fstab
