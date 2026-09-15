@@ -1,25 +1,31 @@
 # ==============================================================================
 # Proxmox VE Instance Layer — Clones the Golden Template into Sized Nodes
 # ==============================================================================
-# Renders and uploads the cloud-init bootstrap snippet (admin user + SSH
-# key, qemu-guest-agent, python3 — see terraform/snippets/bootstrap.yaml.tftpl)
-# and clones it into every node in var.nodes via the reusable vm-instance
-# module. Templated (not a static source_file) because the admin
-# user/SSH key have to be baked into this snippet's user-data — Proxmox
-# ignores ciuser/sshkeys once a custom cicustom snippet is set, so the
-# vm-instance module's user_account block can't deliver them here.
+# Renders and uploads one cloud-init bootstrap snippet per node (admin user
+# + SSH key + hostname, qemu-guest-agent, python3 — see
+# terraform/snippets/bootstrap.yaml.tftpl) and clones each into the matching
+# node via the reusable vm-instance module. One snippet per node (not a
+# single shared file) because each needs its own `hostname:` — a shared
+# snippet can't give every node a different hostname. Templated (not a
+# static source_file) because the admin user/SSH key/hostname have to be
+# baked into this snippet's user-data — Proxmox ignores ciuser/sshkeys once
+# a custom cicustom snippet is set, so the vm-instance module's user_account
+# block can't deliver them here.
 # ==============================================================================
 
 resource "proxmox_virtual_environment_file" "bootstrap_snippet" {
+  for_each = var.nodes
+
   content_type = "snippets"
   datastore_id = var.proxmox_iso_pool
   node_name    = var.proxmox_node
 
   source_raw {
-    file_name = "bootstrap.yaml"
+    file_name = "bootstrap-${each.key}.yaml"
     data = templatefile("${path.module}/../snippets/bootstrap.yaml.tftpl", {
       ci_username    = var.ci_username
       ssh_public_key = trimspace(var.ssh_public_key)
+      hostname       = each.key
     })
   }
 }
@@ -49,5 +55,5 @@ module "node" {
   ci_username    = var.ci_username
   ssh_public_key = var.ssh_public_key
 
-  user_data_file_id = proxmox_virtual_environment_file.bootstrap_snippet.id
+  user_data_file_id = proxmox_virtual_environment_file.bootstrap_snippet[each.key].id
 }
