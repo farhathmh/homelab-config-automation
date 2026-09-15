@@ -26,7 +26,7 @@ variable "node_name" {
 
 variable "clone_vm_id" {
   type        = number
-  description = "Source template VM ID to clone from (e.g. 9000 for Ubuntu, 9010 for Debian)"
+  description = "Source template VM ID to clone from (e.g. 9000 for Ubuntu 26.04 resolute, 9010 for Debian 13 trixie)"
 }
 
 variable "full_clone" {
