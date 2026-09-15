@@ -137,7 +137,11 @@ Known gaps:
    out-of-band `scp` Makefile step instead of a real Terraform resource.
    Neither mistake was repeated: content stays bootstrap-only, delivery is
    a real `proxmox_virtual_environment_file` resource.)
-4. There is no `ansible/` directory yet.
+4. ~~There is no `ansible/` directory yet.~~ — **superseded:** `ansible/`
+   has since been fully built out (`base`/`docker`/`k8s_control`/
+   `k8s_worker`/`security` roles, `playbooks/site.yml` + `security.yml`,
+   `inventories/prod.yml`) — see item 6 below for fixes made to it
+   2026-09-15.
 5. ~~`terraform/instances/` not yet applied~~ — **superseded:** the owner
    has since applied it (all 4 node VMs exist at vmids 500-503). That apply
    exposed a real bug: `vm-instance`'s `user_account` block (username +
@@ -159,6 +163,23 @@ Known gaps:
    for the owner. The assumed gateway `10.10.10.1` for all 4 nodes was not
    explicitly confirmed (only the IP range and vmid range were) — worth a
    glance in `variables.tf`'s `nodes` map before applying.
+6. `ansible/group_vars/all.yml` sat directly under `ansible/` — a sibling
+   of both `inventories/` and `playbooks/`, adjacent to neither. Ansible
+   only auto-loads `group_vars/` from a directory adjacent to the inventory
+   file or the playbook being run, so it was never loaded: `ci_username`
+   and `kubernetes_apt_version` were undefined in every role, confirmed
+   live (`docker` role failed on `'ci_username' is undefined` deploying to
+   `docker-ubuntu-node`). **Fixed:** moved to
+   `ansible/playbooks/group_vars/all.yml`, adjacent to `playbooks/site.yml`
+   (the playbook actually run). Same apply also fixed every node coming up
+   with hostname `ubuntu` instead of its real name (see item 5's snippet
+   fix — `hostname:` is now rendered per-node), and reworked the MOTD:
+   `figlet` swapped for `toilet` (base role package +
+   `ansible/roles/base/templates/motd.j2`), and the per-role MOTD
+   banner-render/deploy tasks in `docker`/`k8s_control`/`k8s_worker` were
+   removed — MOTD is now rendered once in `base` (constant `Erenyx-Lab`
+   banner + a per-node hostname banner only, no per-role text), since it no
+   longer varies by role.
 
 **Note on the templates live-state migration (superseded 2026-09-14):** the
 narrowing decision flagged below as a separate/deliberate owner call has now
@@ -216,27 +237,26 @@ lookup into `templates/`'s state.)
    `proxmox_virtual_environment_file` resource in `terraform/instances/`
    and wired into `user_data_file_id`. No templating needed — content is
    identical for every node under the "nothing role-specific" rule.
-4. **Ansible scaffold** — new `ansible/` directory does everything
-   currently described as "base config / node-specific config / security
-   config":
+4. ~~**Ansible scaffold**~~ — **done**, structure below (see Known gaps #4
+   and #6 for fixes made after the initial build):
    ```
    ansible/
    ├── ansible.cfg
    ├── inventories/prod.yml        # groups: docker, k8s_control, k8s_workers
-   ├── group_vars/all.yml
    ├── playbooks/
+   │   ├── group_vars/all.yml      # moved here from ansible/group_vars/ — see Known gaps #6
    │   ├── site.yml                # base → role-specific → (import) security
    │   └── security.yml            # kept separate so it can be re-run independently
    └── roles/
-       ├── base/                   # tmux, htop, qemu-guest-agent, figlet + generic motd
-       ├── docker/                 # docker engine, user added to docker group, docker motd
-       ├── k8s_control/            # control-plane prep + motd
-       ├── k8s_worker/             # worker prep + motd
+       ├── base/                   # tmux, htop, qemu-guest-agent, toilet + Erenyx-Lab/hostname MOTD
+       ├── docker/                 # docker engine, user added to docker group
+       ├── k8s_control/            # control-plane prep (kubeadm/kubelet/kubectl)
+       ├── k8s_worker/             # worker prep (kubeadm/kubelet/kubectl)
        └── security/               # empty placeholder — firewall/fail2ban not yet researched
    ```
-5. **Makefile chain** — `apply` target becomes a chain:
+5. ~~**Makefile chain**~~ — **done.** `apply` target chains
    `terraform templates apply` (no-op if unchanged) → `terraform instances
-   apply` → `ansible-playbook site.yml` — so one `make apply` does
+   apply` → `ansible-playbook site.yml` — one `make apply` does
    template-if-needed → clone → configure.
 
 Do not start implementing any of these without explicit sign-off from the
