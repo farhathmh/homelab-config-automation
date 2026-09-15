@@ -138,12 +138,27 @@ Known gaps:
    Neither mistake was repeated: content stays bootstrap-only, delivery is
    a real `proxmox_virtual_environment_file` resource.)
 4. There is no `ansible/` directory yet.
-5. `terraform/instances/` is scaffolded and verified against the live
-   cluster (`terraform plan`: 5 to add, 0 to change, 0 to destroy) but has
-   **not been applied** — left for the owner to run. The assumed gateway
-   `10.10.10.1` for all 4 nodes was not explicitly confirmed (only the IP
-   range and vmid range were) — worth a glance in `variables.tf`'s `nodes`
-   map before applying.
+5. ~~`terraform/instances/` not yet applied~~ — **superseded:** the owner
+   has since applied it (all 4 node VMs exist at vmids 500-503). That apply
+   exposed a real bug: `vm-instance`'s `user_account` block (username +
+   SSH key) was silently ignored by Proxmox because `user_data_file_id`
+   was also set — Proxmox drops `ciuser`/`sshkeys` entirely once a custom
+   `cicustom` snippet is set for a VM, it does not merge the two. Every
+   cloned node came up with cloud-init's fallback default user (`ubuntu`)
+   and zero authorized SSH keys, confirmed via serial console
+   (`ci-info: no authorized SSH keys fingerprints found for user ubuntu`),
+   leaving all 4 nodes unreachable for Ansible. **Fixed:** the admin
+   user/SSH key now live in `terraform/snippets/bootstrap.yaml.tftpl`
+   itself (rendered via `templatefile()`), and `vm-instance`'s
+   `user_account` block is now a `dynamic` block gated on
+   `user_data_file_id == null` so it can't silently no-op again — see
+   `docs/cloud-init-guide.md` §2 for the full gotcha writeup. Applying this
+   fix will destroy and recreate all 4 existing node VMs (`user_data_file_id`
+   is a ForceNew attribute on the VM resource) — confirmed via a live
+   `terraform plan` (5 to add, 5 to destroy) but **not yet applied**, left
+   for the owner. The assumed gateway `10.10.10.1` for all 4 nodes was not
+   explicitly confirmed (only the IP range and vmid range were) — worth a
+   glance in `variables.tf`'s `nodes` map before applying.
 
 **Note on the templates live-state migration (superseded 2026-09-14):** the
 narrowing decision flagged below as a separate/deliberate owner call has now
