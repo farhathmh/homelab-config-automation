@@ -85,9 +85,16 @@ resource "proxmox_virtual_environment_vm" "instance" {
       }
     }
 
-    user_account {
-      username = var.ci_username
-      keys     = [trimspace(var.ssh_public_key)]
+    # Proxmox ignores ciuser/sshkeys entirely once a custom cicustom
+    # (= user_data_file_id) snippet is set, so only emit this block when no
+    # custom snippet is supplied — otherwise these values are silently
+    # dropped and the block just implies functionality that isn't happening.
+    dynamic "user_account" {
+      for_each = var.user_data_file_id == null ? [1] : []
+      content {
+        username = var.ci_username
+        keys     = [trimspace(var.ssh_public_key)]
+      }
     }
   }
 
