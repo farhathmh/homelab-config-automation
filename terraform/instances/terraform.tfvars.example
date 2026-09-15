@@ -21,8 +21,13 @@ proxmox_bridge       = "vmbr0"
 ci_username    = "erenyx"
 ssh_public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... user@homelab"
 
-# vmid of the golden template to clone from (default: 9002 / resolute)
-clone_vm_id = 9002
+# Private key counterpart to ssh_public_key above, used to SSH into the
+# Proxmox node itself as root so the provider can upload cloud-init snippets
+# (Proxmox has no API endpoint for snippet content, so this is mandatory).
+ssh_private_key_path = "~/.ssh/id_ed25519"
+
+# vmid of the golden template to clone from (default: 9000 / resolute)
+clone_vm_id = 9000
 
 # Override the `nodes` map in variables.tf here if you need different
 # sizing, IPs, or vmids than the defaults baked in.
