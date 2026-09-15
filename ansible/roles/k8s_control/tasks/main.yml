@@ -1,6 +1,6 @@
 ---
 # Prepares the node and installs kubeadm/kubelet/kubectl (pinned to
-# kubernetes_apt_version in group_vars/all.yml, held at that version via
+# kubernetes_apt_version in playbooks/group_vars/all.yml, held at that version via
 # apt-mark hold so unattended-upgrades can't skew the cluster). Stops short
 # of running `kubeadm init` itself — that's a one-time, cluster-forming
 # action the owner runs manually.
