@@ -1,9 +1,13 @@
 # ==============================================================================
 # Proxmox VE Instance Layer — Clones the Golden Template into Sized Nodes
 # ==============================================================================
-# Uploads the minimal cloud-init bootstrap snippet (qemu-guest-agent +
-# python3 only — see terraform/snippets/bootstrap.yaml) and clones it into
-# every node in var.nodes via the reusable vm-instance module.
+# Renders and uploads the cloud-init bootstrap snippet (admin user + SSH
+# key, qemu-guest-agent, python3 — see terraform/snippets/bootstrap.yaml.tftpl)
+# and clones it into every node in var.nodes via the reusable vm-instance
+# module. Templated (not a static source_file) because the admin
+# user/SSH key have to be baked into this snippet's user-data — Proxmox
+# ignores ciuser/sshkeys once a custom cicustom snippet is set, so the
+# vm-instance module's user_account block can't deliver them here.
 # ==============================================================================
 
 resource "proxmox_virtual_environment_file" "bootstrap_snippet" {
@@ -11,8 +15,12 @@ resource "proxmox_virtual_environment_file" "bootstrap_snippet" {
   datastore_id = var.proxmox_iso_pool
   node_name    = var.proxmox_node
 
-  source_file {
-    path = "${path.module}/../snippets/bootstrap.yaml"
+  source_raw {
+    file_name = "bootstrap.yaml"
+    data = templatefile("${path.module}/../snippets/bootstrap.yaml.tftpl", {
+      ci_username    = var.ci_username
+      ssh_public_key = trimspace(var.ssh_public_key)
+    })
   }
 }
 
