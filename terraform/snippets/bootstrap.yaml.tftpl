@@ -14,6 +14,13 @@
 # separate user_account block would be silently ignored — see
 # docs/cloud-init-guide.md.
 #
+# hostname is set explicitly for the same reason every node was booting as
+# "ubuntu" instead of its real name: Proxmox's own metadata-derived hostname
+# wasn't landing reliably, so cloud-init's own hostname/fqdn precedence
+# (explicit user-data wins) is used instead. This snippet is now rendered
+# once per node (terraform/instances/main.tf), not shared, specifically so
+# each one can carry its own hostname.
+#
 # No `default` entry in `users:` below, so the distro image's default user
 # (e.g. `ubuntu`) is not created alongside this one.
 #
@@ -22,6 +29,9 @@
 # see CLAUDE.md's "Known gaps" note on why an earlier attempt at a fuller
 # snippet (erenyx-base.yaml) was reverted.
 # ==============================================================================
+
+hostname: ${hostname}
+manage_etc_hosts: true
 
 users:
   - name: ${ci_username}
