@@ -58,28 +58,31 @@ initialization {
 ```
 
 ### Method B: Custom Cloud-Init YAML Snippets (`cicustom`)
-This is how `terraform/instances/` bootstraps every cloned node — the
-snippet is uploaded as a real Terraform-managed resource, not pushed
-out-of-band:
+This is how `terraform/instances/` bootstraps every cloned node — one
+snippet per node (not a single shared file — see the hostname note below),
+each uploaded as a real Terraform-managed resource, not pushed out-of-band:
 ```hcl
 # terraform/instances/main.tf
 resource "proxmox_virtual_environment_file" "bootstrap_snippet" {
+  for_each = var.nodes
+
   content_type = "snippets"
   datastore_id = var.proxmox_iso_pool
   node_name    = var.proxmox_node
 
   source_raw {
-    file_name = "bootstrap.yaml"
+    file_name = "bootstrap-${each.key}.yaml"
     data = templatefile("${path.module}/../snippets/bootstrap.yaml.tftpl", {
       ci_username    = var.ci_username
       ssh_public_key = trimspace(var.ssh_public_key)
+      hostname       = each.key
     })
   }
 }
 
 module "node" {
   # ...
-  user_data_file_id = proxmox_virtual_environment_file.bootstrap_snippet.id
+  user_data_file_id = proxmox_virtual_environment_file.bootstrap_snippet[each.key].id
 }
 ```
 
@@ -98,6 +101,14 @@ ubuntu`. The fix: the admin user + SSH key now live in the snippet itself
 block is only emitted (via a `dynamic` block) when `user_data_file_id` is
 null, so it never implies functionality it can't deliver.
 
+**Second gotcha — a shared snippet can't carry a per-node hostname.** The
+snippet was originally one resource uploaded once and reused by all 4
+nodes; every node then booted with hostname `ubuntu` (the base image's
+default) instead of its real name, because nothing in that shared file (or,
+reliably, in Proxmox's own per-VM metadata) set it. Fixed by making
+`bootstrap_snippet` a `for_each` over `var.nodes` — each node gets its own
+rendered file with its own `hostname:` key (see the schema below).
+
 ---
 
 ## 3. Standard `cloud-init.io` Schema Structure
@@ -113,6 +124,9 @@ concerns in and was reverted for exactly that reason — see `CLAUDE.md`.
 
 ```yaml
 #cloud-config
+hostname: ${hostname}
+manage_etc_hosts: true
+
 users:
   - name: ${ci_username}
     groups: [sudo]
