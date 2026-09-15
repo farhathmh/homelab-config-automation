@@ -48,3 +48,17 @@
     owner: root
     group: root
     mode: "0755"
+
+# Drops just the welcome header ("Welcome to Ubuntu...") and the
+# Documentation/Management/Support links block — run-parts (which builds
+# /run/motd.dynamic) skips non-executable files, so removing the execute
+# bit is enough; the scripts themselves stay untouched/package-managed.
+# 50-landscape-sysinfo (System information as of...) and everything else
+# in update-motd.d is left alone, per the owner's request to keep sysinfo.
+- name: Disable stock Ubuntu welcome/help-text MOTD blocks
+  ansible.builtin.file:
+    path: "/etc/update-motd.d/{{ item }}"
+    mode: "0644"
+  loop:
+    - 00-header
+    - 10-help-text
