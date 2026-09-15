@@ -119,16 +119,3 @@
     name: kubelet
     state: started
     enabled: true
-
-- name: Render worker banner
-  ansible.builtin.command: figlet "K8s Worker"
-  register: k8s_worker_banner
-  changed_when: false
-
-- name: Deploy worker MOTD
-  ansible.builtin.template:
-    src: motd.j2
-    dest: /etc/motd
-    owner: root
-    group: root
-    mode: "0644"

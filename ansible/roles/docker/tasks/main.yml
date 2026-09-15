@@ -51,16 +51,3 @@
     name: docker
     state: started
     enabled: true
-
-- name: Render Docker-node banner
-  ansible.builtin.command: figlet "Docker Node"
-  register: docker_banner
-  changed_when: false
-
-- name: Deploy Docker-node MOTD
-  ansible.builtin.template:
-    src: motd.j2
-    dest: /etc/motd
-    owner: root
-    group: root
-    mode: "0644"

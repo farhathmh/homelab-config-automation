@@ -120,16 +120,3 @@
     name: kubelet
     state: started
     enabled: true
-
-- name: Render control-plane banner
-  ansible.builtin.command: figlet "K8s Control"
-  register: k8s_control_banner
-  changed_when: false
-
-- name: Deploy control-plane MOTD
-  ansible.builtin.template:
-    src: motd.j2
-    dest: /etc/motd
-    owner: root
-    group: root
-    mode: "0644"

@@ -5,7 +5,7 @@
       - tmux
       - htop
       - qemu-guest-agent
-      - figlet
+      - toilet
     state: present
     update_cache: true
 
@@ -15,7 +15,21 @@
     state: started
     enabled: true
 
-- name: Deploy generic MOTD
+# MOTD is rendered once here (not per-role) since it's identical in
+# structure across every node — only the hostname banner differs. The
+# Erenyx-Lab banner is constant; role identity isn't shown at all anymore
+# (dropped by request in favor of just the two banners).
+- name: Render Erenyx-Lab banner
+  ansible.builtin.command: toilet -F border -F gay -f slant -k "Erenyx-Lab"
+  register: erenyx_banner
+  changed_when: false
+
+- name: Render hostname banner
+  ansible.builtin.command: toilet -F metal -f digital "{{ inventory_hostname }}"
+  register: hostname_banner
+  changed_when: false
+
+- name: Deploy MOTD
   ansible.builtin.template:
     src: motd.j2
     dest: /etc/motd
