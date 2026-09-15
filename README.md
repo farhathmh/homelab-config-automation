@@ -54,7 +54,7 @@ homelab-config-automation/
 │   │   └── terraform.tfvars.example
 │   │
 │   └── snippets/                      # Custom Cloud-Init YAML definitions (cloud-init.io)
-│       └── bootstrap.yaml             # Minimal first-boot bootstrap (agent + python3 only)
+│       └── bootstrap.yaml.tftpl       # First-boot bootstrap: admin user + SSH key, agent, python3
 │
 ├── GEMINI.md                          # Repository workflow rules and test gates
 └── .gitignore                         # Strict exclusion boundaries for state and secrets
@@ -108,8 +108,9 @@ terraform -chdir=terraform/templates apply
 
 `terraform/instances/` is a separate root module/state — it clones the
 golden template (vmid `9000` by default) into the 4-node set defined in
-`variables.tf`'s `nodes` map, and uploads/wires the minimal cloud-init
-bootstrap snippet (`terraform/snippets/bootstrap.yaml`) into each one.
+`variables.tf`'s `nodes` map, and renders/uploads the cloud-init bootstrap
+snippet (`terraform/snippets/bootstrap.yaml.tftpl` — admin user + SSH key,
+qemu-guest-agent, python3) into each one.
 
 ```bash
 cp terraform/instances/terraform.tfvars.example terraform/instances/terraform.tfvars
