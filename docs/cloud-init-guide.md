@@ -68,8 +68,12 @@ resource "proxmox_virtual_environment_file" "bootstrap_snippet" {
   datastore_id = var.proxmox_iso_pool
   node_name    = var.proxmox_node
 
-  source_file {
-    path = "${path.module}/../snippets/bootstrap.yaml"
+  source_raw {
+    file_name = "bootstrap.yaml"
+    data = templatefile("${path.module}/../snippets/bootstrap.yaml.tftpl", {
+      ci_username    = var.ci_username
+      ssh_public_key = trimspace(var.ssh_public_key)
+    })
   }
 }
 
@@ -79,21 +83,45 @@ module "node" {
 }
 ```
 
+**Important gotcha — Method A and Method B are not additive.** Once a VM's
+`cicustom` (`user_data_file_id`) is set for the user-data section, Proxmox
+drops its own generated `ciuser`/`cipassword`/`sshkeys` config entirely for
+that VM — a `user_account` block set alongside a custom snippet is silently
+ignored, not merged. A previous version of this repo got bitten by exactly
+this: `terraform/modules/vm-instance` set both, `terraform/snippets/bootstrap.yaml`
+had no `users:` section, and every cloned node booted with cloud-init
+falling back to the base image's default `ubuntu` user with **no**
+authorized SSH keys — confirmed via the serial console (`qm terminal
+<vmid>`): `ci-info: no authorized SSH keys fingerprints found for user
+ubuntu`. The fix: the admin user + SSH key now live in the snippet itself
+(templated, not static — see below), and `vm-instance`'s `user_account`
+block is only emitted (via a `dynamic` block) when `user_data_file_id` is
+null, so it never implies functionality it can't deliver.
+
 ---
 
 ## 3. Standard `cloud-init.io` Schema Structure
 
-`terraform/snippets/bootstrap.yaml` is intentionally minimal — its only job
-is to make the node reachable for Ansible. **Nothing role-specific goes
-here**: no `users:` (Terraform's own `user_account` block already handles
-the admin user — defining it twice is a real footgun, not just style), no
-groups, no MOTD/`write_files`, no per-role packages. All of that belongs in
-an Ansible role once the `ansible/` layer exists. An earlier, fuller
-version of this snippet (`erenyx-base.yaml`) mixed those concerns in and
-was reverted for exactly that reason — see `CLAUDE.md`.
+`terraform/snippets/bootstrap.yaml.tftpl` stays scoped to "make the node
+reachable for Ansible" — that now includes the admin user and its SSH key
+(see the gotcha above for why they have to live here), plus
+qemu-guest-agent and python3. **Still nothing role-specific**: no extra
+groups beyond `sudo`, no MOTD/`write_files`, no per-role packages. All of
+that belongs in an Ansible role once the `ansible/` layer exists. An
+earlier, fuller version of this snippet (`erenyx-base.yaml`) mixed those
+concerns in and was reverted for exactly that reason — see `CLAUDE.md`.
 
 ```yaml
 #cloud-config
+users:
+  - name: ${ci_username}
+    groups: [sudo]
+    shell: /bin/bash
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+    lock_passwd: true
+    ssh_authorized_keys:
+      - ${ssh_public_key}
+
 package_update: true
 package_upgrade: false
 
@@ -104,6 +132,9 @@ packages:
 runcmd:
   - systemctl enable --now qemu-guest-agent
 ```
+
+No `default` entry in `users:`, so the base image's default user (`ubuntu`)
+is not created alongside the admin user above.
 
 ---
 
